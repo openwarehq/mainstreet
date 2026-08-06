@@ -27,8 +27,18 @@ export type Completion = {
   usd: number;
 };
 
-const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const VERSION = "2023-06-01";
+
+/**
+ * Overridable so the pipeline can be pointed at a gateway — or, in the tests,
+ * at a local server that returns a canned page. Without this seam the only way
+ * to exercise the design loop is to spend money on it, which means it does not
+ * get exercised.
+ */
+function endpoint(): string {
+  const base = (process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com").replace(/\/+$/, "");
+  return `${base}/v1/messages`;
+}
 
 /**
  * Published per-million-token rates, matched by family prefix.
@@ -112,7 +122,7 @@ export async function complete(args: Args): Promise<Completion> {
 
     let res: Response;
     try {
-      res = await fetch(ENDPOINT, {
+      res = await fetch(endpoint(), {
         method: "POST",
         headers: {
           "x-api-key": key,

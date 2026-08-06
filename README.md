@@ -219,6 +219,7 @@ the ranking still shows up in the tests.
 | `ANTHROPIC_API_KEY` | unset — the built-in renderer designs the pages |
 | `MAINSTREET_MODEL` | `claude-sonnet-5` |
 | `MAINSTREET_DESIGN` | `off` forces the renderer even with a key |
+| `ANTHROPIC_BASE_URL` | point at a gateway instead of the API |
 | `MAINSTREET_FIXTURE` | unset — live Overpass |
 | `MAINSTREET_DB` | `./mainstreet.db` |
 | `MAINSTREET_SITES` | `./sites` |
@@ -234,7 +235,7 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 100 tests
+npm test          # 110 tests
 npm run typecheck
 npm run build
 ```
@@ -246,6 +247,13 @@ the audit, which is written entirely from the model's point of view. Every case
 there is the natural, plausible, *wrong* thing: it invents a rating, invents a
 phone number, reaches for Unsplash, drops the map token, returns a fenced code
 block, returns a fragment with no `<body>` to inject into.
+
+The design loop itself runs against a local stand-in for the API, because the
+parts most likely to break — stitching the prefill back on, *rewriting* a
+rejected page rather than patching it, retrying a 429, failing fast on a 401 —
+cannot be tested against the real thing without paying to fail. What is
+deliberately not tested is whether the page looks good. Only the real model
+answers that.
 
 ---
 
