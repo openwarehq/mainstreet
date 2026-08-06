@@ -1,4 +1,5 @@
 import { MOTION_CSS } from "./motion";
+import { wordmark } from "./wordmark";
 import type { Palette, Section, SiteSpec } from "./spec";
 
 /**
@@ -106,6 +107,11 @@ body{
 .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
 h1,h2,h3{font-family:${p.display};line-height:1.15;margin:0;font-weight:${p.mood === "elegant" ? 400 : 700}}
 h1{font-size:clamp(38px,7vw,68px);letter-spacing:-0.02em}
+/* The name is drawn rather than typeset — see wordmark.ts. The readable text is
+   kept for anything that does not render SVG, and for search. */
+.wordmark{display:block;max-width:min(760px,88%)}
+.wordmark svg{display:block;width:100%;height:auto;color:var(--ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-0.01em}
 h3{font-size:19px}
 p{margin:0 0 1em}
@@ -259,7 +265,7 @@ function renderSection(s: Section, spec: SiteSpec): string {
   <div class="scrim"></div>
   <div class="inner"><div class="wrap">
     <span class="eyebrow m-in">${esc(spec.categoryLabel)}${spec.locality ? ` · ${esc(spec.locality)}` : ""}</span>
-    <h1 class="m-mask"><span class="m-line">${esc(s.headline)}</span></h1>
+    <h1 class="wordmark m-draw">${wordmark(spec.business).svg}<span class="sr">${esc(s.headline)}</span></h1>
     <p class="sub m-in m-in-3">${esc(s.sub)}</p>
     <div class="ctas m-in m-in-4">
       ${s.ctas

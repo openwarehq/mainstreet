@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cooper's Hotel — Pub in Newtown</title>
-<meta name="description" content="Cooper's Hotel is a pub at 221 King Street, Newtown. Open Monday to Thursday, 07:00 to midnight.">
+<meta name="description" content="Cooper's Hotel is a pub at 221 King Street, Newtown. Open seven days, and until two in the morning on Friday and Saturday.">
 <meta property="og:title" content="Cooper's Hotel — Pub in Newtown">
-<meta property="og:description" content="A pub on King Street, Newtown. Monday to Thursday, seven in the morning until midnight.">
+<meta property="og:description" content="A pub on King Street, Newtown. Open seven days, and until two on Friday and Saturday.">
 <style>
 :root{
   --bg:#f6f0e9; --surface:#fbf7f4; --raised:#f0e6db; --line:#e4d9cd;
@@ -44,14 +44,16 @@ img{display:block;max-width:100%}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 .wrap{max-width:1240px;margin:0 auto;padding:0 var(--gut)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ── the drawn name ───────────────────────────────────────────────────── */
+.wm{display:block;width:100%;height:auto;color:var(--ink)}
+.wm-hero{display:block;max-width:min(1000px,100%);margin:0}
+.wm-small{display:block;width:clamp(128px,15vw,186px)}
 
 /* ── header ───────────────────────────────────────────────────────────── */
-.top{padding:clamp(26px,4vw,44px) 0 0}
+.top{padding:clamp(24px,3.4vw,40px) 0 0}
 .top .wrap{display:flex;align-items:center;gap:16px}
-.mark{
-  font-family:var(--display);font-weight:700;font-size:clamp(17px,1.6vw,21px);
-  letter-spacing:-.02em;text-decoration:none;
-}
 .top .right{margin-left:auto;display:flex;align-items:center;gap:12px}
 
 /* ── buttons ──────────────────────────────────────────────────────────── */
@@ -71,76 +73,72 @@ a{color:inherit}
   width:58px;height:58px;padding:0;border-radius:999px;
   background:var(--ink);color:var(--bg);box-shadow:var(--lift);
   display:inline-flex;align-items:center;justify-content:center;
+  transition:transform .4s cubic-bezier(.2,.7,.2,1),box-shadow .4s;
 }
+.btn-round:hover{transform:translateY(-2px);box-shadow:var(--lift-lg)}
 .btn-sm{padding:14px 26px;font-size:15px}
 @media (max-width:640px){.btn{padding:15px 26px;font-size:15px}.btn-round{width:50px;height:50px}}
+@media (max-width:560px){.top .btn-sm{display:none}}
 
 /* ── hero ─────────────────────────────────────────────────────────────── */
-.hero{padding:clamp(40px,7vw,92px) 0 clamp(30px,5vw,60px)}
-h1{
-  font-family:var(--display);font-weight:700;
-  font-size:clamp(54px,11vw,158px);line-height:.94;letter-spacing:-.045em;
-  margin:0;max-width:11ch;
-}
-/* The asymmetry is the whole idea: headline flush left, everything that
-   follows pushed over to the right and right-aligned. */
-.aside{
-  margin:clamp(30px,5vw,58px) 0 0 auto;max-width:560px;text-align:right;
-}
-.lede{
-  font-size:clamp(18px,1.75vw,23px);line-height:1.5;color:var(--ink);margin:0;
-}
+.hero{padding:clamp(34px,6vw,80px) 0 clamp(30px,5vw,60px)}
+.aside{margin:clamp(30px,5vw,56px) 0 0 auto;max-width:560px;text-align:right}
+.lede{font-size:clamp(18px,1.75vw,23px);line-height:1.5;color:var(--ink);margin:0}
 .acts{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;margin-top:clamp(26px,3.5vw,40px)}
 @media (max-width:720px){.aside{text-align:left;margin-left:0}.acts{justify-content:flex-start}}
 
 /* ── the picture, and the picture inside it ───────────────────────────── */
-.showcase{position:relative;padding-bottom:clamp(60px,9vw,120px)}
-.plate{
-  border-radius:var(--r);overflow:hidden;background:var(--raised);
-  box-shadow:var(--lift-lg);
-}
+.showcase{position:relative;padding-bottom:clamp(56px,8vw,110px)}
+.plate{border-radius:var(--r);overflow:hidden;background:var(--raised);box-shadow:var(--lift-lg)}
 .plate img{width:100%;height:clamp(300px,46vw,620px);object-fit:cover}
 .inset{
-  position:absolute;left:clamp(-4px,1.5vw,34px);bottom:clamp(18px,4vw,54px);
+  position:absolute;left:clamp(-4px,1.5vw,34px);bottom:clamp(14px,3.4vw,48px);
   width:clamp(150px,20vw,268px);border-radius:calc(var(--r) - 6px);overflow:hidden;
   box-shadow:var(--lift-lg);background:var(--surface);
   transition:transform .5s cubic-bezier(.2,.7,.2,1);
 }
 .inset img{width:100%;height:clamp(190px,25vw,326px);object-fit:cover}
 .inset:hover{transform:translateY(-6px)}
-.credit{
-  position:absolute;right:clamp(4px,1.5vw,26px);bottom:clamp(-6px,1vw,10px);
-  font-size:11.5px;color:var(--muted);
-}
+.credit{position:absolute;right:clamp(4px,1.5vw,26px);bottom:clamp(-4px,1vw,12px);font-size:11.5px;color:var(--muted)}
 @media (max-width:600px){
   .inset{position:static;width:100%;margin-top:14px}
   .inset img{height:clamp(160px,42vw,220px)}
   .credit{position:static;text-align:right;padding-top:12px}
 }
 
+/* ── at a glance ──────────────────────────────────────────────────────── */
+.glance{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+@media (min-width:880px){.glance{grid-template-columns:repeat(4,1fr)}}
+.stat{
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);
+  padding:clamp(20px,2.4vw,30px);
+  transition:transform .4s cubic-bezier(.2,.7,.2,1),box-shadow .4s;
+}
+.stat:hover{transform:translateY(-4px);box-shadow:var(--lift-lg)}
+.stat dt{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.stat dd{
+  margin:0;font-family:var(--display);font-weight:700;letter-spacing:-.03em;
+  font-size:clamp(22px,2.4vw,32px);line-height:1.08;
+}
+.stat dd small{display:block;font-size:14px;font-weight:400;letter-spacing:0;color:var(--muted);margin-top:8px;line-height:1.45}
+
 /* ── sections ─────────────────────────────────────────────────────────── */
 section{padding:clamp(48px,7vw,104px) 0}
-.eye{
-  font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
-  margin:0 0 20px;
-}
+.eye{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
 h2{
   font-family:var(--display);font-weight:700;
   font-size:clamp(32px,4.6vw,62px);line-height:1.02;letter-spacing:-.035em;
   margin:0 0 26px;max-width:15ch;
 }
+h3{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em;margin:0 0 12px}
 .copy{font-size:18px;line-height:1.68;color:var(--muted);max-width:58ch}
 .copy + .copy{margin-top:1.05em}
 .copy strong{color:var(--ink);font-weight:600}
-
 .duo{display:grid;gap:clamp(24px,4vw,64px);grid-template-columns:1fr;align-items:start}
 @media (min-width:940px){.duo{grid-template-columns:1fr 1fr}}
 
 /* ── card ─────────────────────────────────────────────────────────────── */
-.card{
-  background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);
-  padding:clamp(24px,3vw,40px);
-}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);padding:clamp(24px,3vw,40px)}
 .week{list-style:none;margin:0;padding:0}
 .week li{
   display:flex;justify-content:space-between;gap:20px;align-items:baseline;
@@ -151,13 +149,34 @@ h2{
 .week li:last-child{border-bottom:0}
 .week li:hover{color:var(--accent);padding-left:10px}
 .week li span:last-child{color:var(--muted)}
-.week li.shut{color:var(--muted);opacity:.72}
-.week li.shut span:last-child{font-style:italic}
-.pin{
-  display:inline-flex;align-items:center;gap:10px;margin-top:22px;
-  font-size:14px;color:var(--muted);
-}
+.week li.late span:last-child{color:var(--accent);font-weight:600}
+.pin{display:inline-flex;align-items:center;gap:10px;margin-top:22px;font-size:14px;color:var(--muted)}
 .pin .swatch{width:10px;height:10px;border-radius:999px;background:var(--accent)}
+
+/* ── provenance ───────────────────────────────────────────────────────── */
+.tags{width:100%;border-collapse:collapse;font-size:15.5px}
+.tags th{
+  text-align:left;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;padding:0 0 12px;border-bottom:1px solid var(--line);
+}
+.tags td{padding:14px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.tags tr:last-child td{border-bottom:0}
+.tags code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;
+  background:var(--raised);border-radius:6px;padding:3px 7px;color:var(--ink);
+}
+.tags td:last-child{text-align:right;color:var(--muted)}
+
+/* ── checklist ────────────────────────────────────────────────────────── */
+.checks{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:760px){.checks{grid-template-columns:1fr 1fr}}
+.checks ul{list-style:none;margin:0;padding:0}
+.checks li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:16px}
+.checks li:last-child{border-bottom:0}
+.tick{flex:0 0 auto;width:20px;height:20px;margin-top:2px}
+.checks .yes .tick{color:var(--accent)}
+.checks .no .tick{color:var(--muted)}
+.checks .no li{color:var(--muted)}
 
 /* ── map ──────────────────────────────────────────────────────────────── */
 .chart{border-radius:var(--r);overflow:hidden;box-shadow:var(--lift-lg);background:var(--surface)}
@@ -172,15 +191,12 @@ address{font-style:normal;font-size:22px;line-height:1.5;margin:0 0 8px;letter-s
   padding:clamp(38px,6vw,88px) clamp(26px,4vw,72px);box-shadow:var(--lift-lg);
   text-align:center;
 }
-.close h2{color:var(--bg);margin:0 auto 22px;max-width:14ch}
-.close p{color:rgba(246,240,233,.76);font-size:18px;max-width:46ch;margin:0 auto 32px}
+.close .wm{color:var(--bg);max-width:min(620px,86%);margin:0 auto 30px}
+.close p{color:rgba(246,240,233,.76);font-size:18px;max-width:48ch;margin:0 auto 32px}
 .close .acts{justify-content:center}
 
 footer.end{padding:clamp(34px,5vw,64px) 0 clamp(44px,7vw,88px)}
-footer.end .wrap{
-  display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;
-  font-size:13.5px;color:var(--muted);
-}
+footer.end .wrap{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;font-size:13.5px;color:var(--muted)}
 </style>
 <meta name="robots" content="noindex, nofollow">
 <style>/* ── motion ───────────────────────────────────────────────────────────────
@@ -203,6 +219,7 @@ footer.end .wrap{
 }
 @keyframes m-float{0%{transform:translateY(0)}50%{transform:translateY(-9px)}100%{transform:translateY(0)}}
 @keyframes m-hue{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(26deg)}}
+@keyframes m-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
 
 /* Hover and focus movement is safe everywhere: it is short, and it only
    happens because somebody asked for it. */
@@ -273,6 +290,17 @@ footer.end .wrap{
     }
   }
 
+  /* The drawn wordmark writes itself on, one stroke after another.
+     Every path carries pathLength="100", so a single dasharray works for a
+     hairline apostrophe and a whole capital W alike — no measuring, and
+     therefore no script. The per-stroke delay comes from --i, set inline on
+     each path by the generator. */
+  .m-draw path{
+    stroke-dasharray:100;stroke-dashoffset:100;
+    animation:m-draw .58s cubic-bezier(.55,.05,.3,1) both;
+    animation-delay:calc(var(--i,0) * .052s + .12s);
+  }
+
   /* Ambient, unending, and therefore the two most likely to be unwelcome —
      both are off entirely under reduced motion, like everything else here. */
   .m-aurora{animation:m-aurora 34s ease-in-out infinite;will-change:transform}
@@ -292,6 +320,7 @@ footer.end .wrap{
 /* Nothing moves for anybody who has asked for that. Not a soft version — none
    of it. The page still reads exactly the same. */
 @media (prefers-reduced-motion: reduce){
+  .m-draw path{animation:none !important;stroke-dashoffset:0 !important}
   .m-in,.m-rise,.m-fade,.m-wipe,.m-grow,.m-parallax,.m-aurora,.m-float,.m-hue,.m-stagger > *,.m-mask .m-line{
     animation:none !important;opacity:1 !important;transform:none !important;clip-path:none !important;
   }
@@ -305,7 +334,9 @@ footer.end .wrap{
 
 <header class="top">
   <div class="wrap">
-    <a class="mark m-in" href="#top">Cooper's Hotel</a>
+    <a class="wm-small m-in m-draw" href="#top" aria-label="Cooper's Hotel, home"><svg class="wm" viewBox="-3.68 -1.6 178 17.2" role="img" aria-label="Cooper's Hotel" fill="none" stroke="currentColor" stroke-width="2.02" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="skewX(-1.05)"><g transform="translate(0 -0.29) rotate(0.7 5 7)"><path d="M9.4 2.6 C7.8 -0.4 0.4 -0.3 0.4 7 C0.4 14.3 7.8 14.4 9.4 11.4" pathLength="100" style="--i:0"/></g><g transform="translate(13.48 0.15) rotate(0.98 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:1"/></g><g transform="translate(26.96 -0.03) rotate(0.53 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:2"/></g><g transform="translate(40.44 0.18) rotate(-0.39 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.6 4.8 7.6 L0 7.6" pathLength="100" style="--i:3"/></g><g transform="translate(53.92 -0.07) rotate(1.13 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:4"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:5"/></g><g transform="translate(67.4 -0.04) rotate(0.66 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.2 4.8 7.2 L0 7.2" pathLength="100" style="--i:6"/><path d="M4.4 7.2 L9.8 14" pathLength="100" style="--i:7"/></g><g transform="translate(80.88 -0.02) rotate(0.69 1.2 7)"><path d="M1.2 0 L0.6 4.6" pathLength="100" style="--i:8"/></g><g transform="translate(86.76 -0.28) rotate(-0.75 5 7)"><path d="M9.3 2.6 C9.3 -0.7 0.9 -1 0.9 3.5 C0.9 7.2 9.2 6.4 9.2 10.4 C9.2 14.9 0.6 14.7 0.6 11.3" pathLength="100" style="--i:9"/></g><g transform="translate(108.72 0.46) rotate(0.61 5 7)"><path d="M0 0 L0 14" pathLength="100" style="--i:10"/><path d="M10 0 L10 14" pathLength="100" style="--i:11"/><path d="M0 7 L10 7" pathLength="100" style="--i:12"/></g><g transform="translate(122.2 -0.07) rotate(-0.18 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:13"/></g><g transform="translate(135.68 -0.02) rotate(0.49 4.7 7)"><path d="M0 0 L9.4 0" pathLength="100" style="--i:14"/><path d="M4.7 0 L4.7 14" pathLength="100" style="--i:15"/></g><g transform="translate(148.56 0.03) rotate(-0.69 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:16"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:17"/></g><g transform="translate(162.04 0.34) rotate(0.55 4.3 7)"><path d="M0 0 L0 14 L8.6 14" pathLength="100" style="--i:18"/></g></g>
+</svg></a>
     <div class="right m-in m-in-2">
       <a class="btn btn-dark btn-sm" href="#hours">Opening hours</a>
       <a class="btn-round" href="https://www.openstreetmap.org/?mlat=-33.895193&amp;mlon=151.1815599#map=18/-33.895193/151.1815599" target="_blank" rel="noopener" aria-label="Open the location in a map">
@@ -321,11 +352,13 @@ footer.end .wrap{
   <div class="wrap">
 
     <div class="hero">
-      <h1 class="m-mask"><span class="m-line">Cooper's</span><span class="m-line">Hotel</span></h1>
+      <h1 class="wm-hero m-draw"><svg class="wm" viewBox="-3.68 -1.6 178 17.2" role="img" aria-label="Cooper's Hotel" fill="none" stroke="currentColor" stroke-width="2.02" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="skewX(-1.05)"><g transform="translate(0 -0.29) rotate(0.7 5 7)"><path d="M9.4 2.6 C7.8 -0.4 0.4 -0.3 0.4 7 C0.4 14.3 7.8 14.4 9.4 11.4" pathLength="100" style="--i:0"/></g><g transform="translate(13.48 0.15) rotate(0.98 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:1"/></g><g transform="translate(26.96 -0.03) rotate(0.53 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:2"/></g><g transform="translate(40.44 0.18) rotate(-0.39 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.6 4.8 7.6 L0 7.6" pathLength="100" style="--i:3"/></g><g transform="translate(53.92 -0.07) rotate(1.13 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:4"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:5"/></g><g transform="translate(67.4 -0.04) rotate(0.66 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.2 4.8 7.2 L0 7.2" pathLength="100" style="--i:6"/><path d="M4.4 7.2 L9.8 14" pathLength="100" style="--i:7"/></g><g transform="translate(80.88 -0.02) rotate(0.69 1.2 7)"><path d="M1.2 0 L0.6 4.6" pathLength="100" style="--i:8"/></g><g transform="translate(86.76 -0.28) rotate(-0.75 5 7)"><path d="M9.3 2.6 C9.3 -0.7 0.9 -1 0.9 3.5 C0.9 7.2 9.2 6.4 9.2 10.4 C9.2 14.9 0.6 14.7 0.6 11.3" pathLength="100" style="--i:9"/></g><g transform="translate(108.72 0.46) rotate(0.61 5 7)"><path d="M0 0 L0 14" pathLength="100" style="--i:10"/><path d="M10 0 L10 14" pathLength="100" style="--i:11"/><path d="M0 7 L10 7" pathLength="100" style="--i:12"/></g><g transform="translate(122.2 -0.07) rotate(-0.18 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:13"/></g><g transform="translate(135.68 -0.02) rotate(0.49 4.7 7)"><path d="M0 0 L9.4 0" pathLength="100" style="--i:14"/><path d="M4.7 0 L4.7 14" pathLength="100" style="--i:15"/></g><g transform="translate(148.56 0.03) rotate(-0.69 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:16"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:17"/></g><g transform="translate(162.04 0.34) rotate(0.55 4.3 7)"><path d="M0 0 L0 14 L8.6 14" pathLength="100" style="--i:18"/></g></g>
+</svg><span class="sr">Cooper's Hotel</span></h1>
       <div class="aside">
         <p class="lede m-in m-in-4">
-          A pub on King Street, Newtown. Open from seven in the morning until
-          midnight, Monday through Thursday — a long day, four days a week.
+          A pub on King Street, Newtown. Open seven days from seven in the
+          morning — and until two the next morning on Friday and Saturday.
         </p>
         <div class="acts m-in m-in-5">
           <a class="btn btn-dark" href="#hours">Opening hours</a>
@@ -341,10 +374,17 @@ footer.end .wrap{
       </div>
       <div class="inset m-fade">
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Bar_interior%2C_Mathers_Bar%2C_Queensferry_Street%2C_Edinburgh.jpg/1280px-Bar_interior%2C_Mathers_Bar%2C_Queensferry_Street%2C_Edinburgh.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail"
-             alt="" width="1280" height="960" loading="lazy" decoding="async">
+             alt="" width="1280" height="853" loading="lazy" decoding="async">
       </div>
       <p class="credit">Reference imagery, not this room — swap in your own before this goes live.</p>
     </div>
+
+    <dl class="glance m-stagger">
+      <div class="stat"><dt>Category</dt><dd>Pub<small>As tagged in OpenStreetMap</small></dd></div>
+      <div class="stat"><dt>Where</dt><dd>221 King&nbsp;St<small>Newtown 2042</small></dd></div>
+      <div class="stat"><dt>Open</dt><dd>Seven days<small>Hours vary across the week</small></dd></div>
+      <div class="stat"><dt>Latest</dt><dd>02:00<small>Friday and Saturday nights</small></dd></div>
+    </dl>
 
     <section id="pub" class="m-rise">
       <div class="duo">
@@ -355,8 +395,10 @@ footer.end .wrap{
         <div>
           <p class="copy">
             Cooper's Hotel is a pub at <strong>221 King Street</strong>, on the
-            Newtown strip. It opens at seven in the morning and runs through to
-            midnight, Monday to Thursday.
+            Newtown strip. It opens at seven in the morning every day of the week,
+            runs to midnight from Monday to Thursday, and keeps going until
+            <strong>two in the morning</strong> on Friday and Saturday. Sunday
+            starts later, at ten, and finishes at midnight.
           </p>
           <p class="copy">
             That is everything the public map record holds about it, and everything
@@ -371,11 +413,12 @@ footer.end .wrap{
       <div class="duo">
         <div>
           <p class="eye">Opening hours</p>
-          <h2>Seven in the morning until midnight</h2>
+          <h2>Seven days, and late twice a week</h2>
           <p class="copy">
-            Seventeen hours a day, four days a week, exactly as currently mapped in
-            OpenStreetMap. If the weekend is wrong there, it is wrong everywhere —
-            which is worth a minute of somebody's time either way.
+            Seventeen hours a day through the week, nineteen on Friday and
+            Saturday. Exactly as currently mapped in OpenStreetMap — if any of it
+            is wrong there, it is wrong everywhere, which is worth a minute of
+            somebody's time either way.
           </p>
         </div>
         <div class="card">
@@ -384,11 +427,11 @@ footer.end .wrap{
             <li><span>Tuesday</span><span>07:00 &ndash; 24:00</span></li>
             <li><span>Wednesday</span><span>07:00 &ndash; 24:00</span></li>
             <li><span>Thursday</span><span>07:00 &ndash; 24:00</span></li>
-            <li class="shut"><span>Friday</span><span>Closed</span></li>
-            <li class="shut"><span>Saturday</span><span>Closed</span></li>
-            <li class="shut"><span>Sunday</span><span>Closed</span></li>
+            <li class="late"><span>Friday</span><span>07:00 &ndash; 02:00</span></li>
+            <li class="late"><span>Saturday</span><span>07:00 &ndash; 02:00</span></li>
+            <li><span>Sunday</span><span>10:00 &ndash; 24:00</span></li>
           </ul>
-          <p class="pin"><span class="swatch"></span> As mapped — not confirmed with the pub.</p>
+          <p class="pin"><span class="swatch"></span> Friday and Saturday run past midnight.</p>
         </div>
       </div>
     </section>
@@ -433,6 +476,71 @@ footer.end .wrap{
       </div>
     </section>
 
+    <section id="source" class="m-rise">
+      <div class="duo">
+        <div>
+          <p class="eye">Where this came from</p>
+          <h2>Every fact, and its tag</h2>
+          <p class="copy">
+            Nothing on this page was written about the business without a source.
+            These are the OpenStreetMap tags it was built from — the whole record,
+            not a selection from it.
+          </p>
+        </div>
+        <div class="card">
+          <table class="tags">
+            <thead><tr><th scope="col">Tag</th><th scope="col">Value</th></tr></thead>
+            <tbody>
+              <tr><td><code>name</code></td><td>Cooper's Hotel</td></tr>
+              <tr><td><code>amenity</code></td><td>pub</td></tr>
+              <tr><td><code>addr:housenumber</code></td><td>221</td></tr>
+              <tr><td><code>addr:street</code></td><td>King Street</td></tr>
+              <tr><td><code>addr:suburb</code></td><td>Newtown</td></tr>
+              <tr><td><code>addr:postcode</code></td><td>2042</td></tr>
+              <tr><td><code>opening_hours</code></td><td>Mo-Th 07:00-24:00, Fr,Sa 07:00-02:00, Su 10:00-24:00</td></tr>
+              <tr><td><code>phone</code></td><td>not set</td></tr>
+              <tr><td><code>email</code></td><td>not set</td></tr>
+              <tr><td><code>website</code></td><td>not set</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="check" class="m-rise">
+      <div class="duo" style="margin-bottom:clamp(20px,3vw,36px)">
+        <div>
+          <p class="eye">Before this goes live</p>
+          <h2>What is settled, and what is not</h2>
+        </div>
+        <div>
+          <p class="copy">
+            Everything on the left traces to the map record. Everything on the
+            right is a decision nobody has made yet — this page is a starting
+            point for that conversation, not a replacement for it.
+          </p>
+        </div>
+      </div>
+      <div class="checks">
+        <div class="card yes">
+          <h3>From the record</h3>
+          <ul>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"/></svg><span>Name, category and street address</span></li>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"/></svg><span>Opening hours, all seven days</span></li>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"/></svg><span>The map, drawn from its own coordinates</span></li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h3>Still to confirm</h3>
+          <ul>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Photographs of the actual room</span></li>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>A phone number and an email address</span></li>
+            <li><svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Anything at all about what is served</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <section id="add" class="m-rise" style="padding-top:0">
       <div class="duo">
         <div>
@@ -450,18 +558,14 @@ footer.end .wrap{
       </div>
     </section>
 
-    <figure class="plate m-zoom m-fade" style="margin:0 0 clamp(48px,7vw,104px)">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/2016_Uruguay_interior_del_Bar_Tabar%C3%A9_-_Montevideo.jpg/1280px-2016_Uruguay_interior_del_Bar_Tabar%C3%A9_-_Montevideo.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail"
-           alt="" width="1280" height="960" loading="lazy" decoding="async"
-           style="height:clamp(200px,26vw,340px)">
-    </figure>
-
     <section style="padding-top:0">
       <div class="close m-rise">
-        <h2>Ready when you are</h2>
+        <div class="wm m-draw"><svg class="wm" viewBox="-3.68 -1.6 178 17.2" role="img" aria-label="Cooper's Hotel" fill="none" stroke="currentColor" stroke-width="2.02" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="skewX(-1.05)"><g transform="translate(0 -0.29) rotate(0.7 5 7)"><path d="M9.4 2.6 C7.8 -0.4 0.4 -0.3 0.4 7 C0.4 14.3 7.8 14.4 9.4 11.4" pathLength="100" style="--i:0"/></g><g transform="translate(13.48 0.15) rotate(0.98 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:1"/></g><g transform="translate(26.96 -0.03) rotate(0.53 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:2"/></g><g transform="translate(40.44 0.18) rotate(-0.39 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.6 4.8 7.6 L0 7.6" pathLength="100" style="--i:3"/></g><g transform="translate(53.92 -0.07) rotate(1.13 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:4"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:5"/></g><g transform="translate(67.4 -0.04) rotate(0.66 5 7)"><path d="M0 14 L0 0 L4.8 0 C8.6 0 8.6 7.2 4.8 7.2 L0 7.2" pathLength="100" style="--i:6"/><path d="M4.4 7.2 L9.8 14" pathLength="100" style="--i:7"/></g><g transform="translate(80.88 -0.02) rotate(0.69 1.2 7)"><path d="M1.2 0 L0.6 4.6" pathLength="100" style="--i:8"/></g><g transform="translate(86.76 -0.28) rotate(-0.75 5 7)"><path d="M9.3 2.6 C9.3 -0.7 0.9 -1 0.9 3.5 C0.9 7.2 9.2 6.4 9.2 10.4 C9.2 14.9 0.6 14.7 0.6 11.3" pathLength="100" style="--i:9"/></g><g transform="translate(108.72 0.46) rotate(0.61 5 7)"><path d="M0 0 L0 14" pathLength="100" style="--i:10"/><path d="M10 0 L10 14" pathLength="100" style="--i:11"/><path d="M0 7 L10 7" pathLength="100" style="--i:12"/></g><g transform="translate(122.2 -0.07) rotate(-0.18 5 7)"><path d="M5 -0.3 C9 -0.3 10 3.4 10 7 C10 10.6 9 14.3 5 14.3 C1 14.3 0 10.6 0 7 C0 3.4 1 -0.3 5 -0.3 Z" pathLength="100" style="--i:13"/></g><g transform="translate(135.68 -0.02) rotate(0.49 4.7 7)"><path d="M0 0 L9.4 0" pathLength="100" style="--i:14"/><path d="M4.7 0 L4.7 14" pathLength="100" style="--i:15"/></g><g transform="translate(148.56 0.03) rotate(-0.69 5 7)"><path d="M9.4 0 L0 0 L0 14 L9.4 14" pathLength="100" style="--i:16"/><path d="M0 7 L7.4 7" pathLength="100" style="--i:17"/></g><g transform="translate(162.04 0.34) rotate(0.55 4.3 7)"><path d="M0 0 L0 14 L8.6 14" pathLength="100" style="--i:18"/></g></g>
+</svg></div>
         <p>
-          This is a draft built from public map data. Every detail on it can be
-          corrected, replaced or removed before anything goes live.
+          A draft built from public map data. Every detail on it can be corrected,
+          replaced or removed before anything goes live.
         </p>
         <div class="acts">
           <a class="btn btn-light" href="#hours">Opening hours</a>
@@ -475,7 +579,7 @@ footer.end .wrap{
   <footer class="end">
     <div class="wrap">
       <span>Cooper's Hotel — Pub, Newtown</span>
-      <span>221 King Street · Monday to Thursday, 07:00 &ndash; 24:00</span>
+      <span>221 King Street · Seven days from 07:00</span>
     </div>
   </footer>
 </main>

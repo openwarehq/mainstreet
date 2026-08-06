@@ -25,6 +25,7 @@
 import { audit, violationReport, type Violation } from "./audit";
 import { complete, DEFAULT_MODEL, hasKey, type Completion } from "./claude";
 import { MOTION_CSS, MOTION_DOC } from "./motion";
+import { wordmark } from "./wordmark";
 import { hash } from "./palette";
 import type { SiteSpec } from "./spec";
 
@@ -194,6 +195,7 @@ function brief(spec: SiteSpec, direction: (typeof DIRECTIONS)[number]): string {
     f.email ? `Email (use this exactly): ${f.email}` : `Email: none on record — do not show an email address anywhere`,
     f.hours ? `Opening hours:\n${f.hours.map((h) => `  ${h}`).join("\n")}` : null,
     f.hoursRaw ? `Opening hours, unparsed — reproduce this string verbatim and do not interpret it: ${f.hoursRaw}` : null,
+    f.hoursNotes.length ? `Also on the hours record, to show as a note beside the table rather than in it: ${f.hoursNotes.join("; ")}` : null,
     !f.hours && !f.hoursRaw ? `Opening hours: not mapped — omit the section entirely` : null,
     f.social.length ? `Social links: ${f.social.map((s) => `${s.label} ${s.href}`).join(", ")}` : null,
     `Map link for a directions button: https://www.openstreetmap.org/?mlat=${f.lat}&mlon=${f.lon}#map=18/${f.lat}/${f.lon}`,
@@ -246,6 +248,21 @@ Do not introduce colours outside this palette except by mixing these with transp
 ${imagery}
 
 Where a photograph carries text over it, put a gradient scrim behind the text — a headline sitting directly on a photograph is unreadable and is the first sign of a generated page.
+
+## The name, drawn
+
+Write the exact token {{WORDMARK}} where the business's name should appear as a
+logotype. It is replaced with an inline <svg> of the name drawn in a monoline
+alphabet generated for this business — its own stroke weight, slant, tracking
+and terminals. It has no intrinsic size: give it width:100% and height:auto, or a
+max-width, and set a color on it, because it is stroked in currentColor.
+
+The token brings its own <svg>. To make it write itself on, wrap it in an
+element with class="m-draw" — for example <div class="m-draw">{{WORDMARK}}</div>.
+
+Use it for the hero, and again small in the header if you want a mark there. Set
+the name in ordinary type as well somewhere on the page — the drawn version is
+uppercase and a logotype, not a substitute for the readable name.
 
 ## The map
 
@@ -380,6 +397,20 @@ function pin(html: string, spec: SiteSpec): string {
   return out;
 }
 
+/**
+ * Draws the name wherever the token appears.
+ *
+ * A business with no website has no logotype either, so one is generated and
+ * dropped in — the same mark every time for the same name, a different one for
+ * the next business. Sized by its container, so the same token works at 15px in
+ * a header and at 160px in a hero.
+ */
+function placeWordmark(html: string, spec: SiteSpec): string {
+  if (!html.includes("{{WORDMARK}}")) return html;
+  const mark = wordmark(spec.business);
+  return html.replace(/\{\{WORDMARK\}\}/g, mark.svg);
+}
+
 /** Drops the map in, or appends one if the model forgot the token. */
 function placeMap(html: string, spec: SiteSpec): string {
   const map = spec.assets?.map;
@@ -409,7 +440,7 @@ function placeMap(html: string, spec: SiteSpec): string {
  * *misbehaves*.
  */
 export function assemble(html: string, spec: SiteSpec): string {
-  return pin(placeMap(extract(html), spec), spec);
+  return pin(placeWordmark(placeMap(extract(html), spec), spec), spec);
 }
 
 export function designerAvailable(): boolean {

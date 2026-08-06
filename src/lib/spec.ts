@@ -53,6 +53,8 @@ export type Facts = {
   hours: string[] | null;
   /** Hours OSM had but the parser would not guess at — shown verbatim. */
   hoursRaw: string | null;
+  /** Rules that are real but are not weekdays, e.g. "Public holidays: closed". */
+  hoursNotes: string[];
   cuisine: string | null;
   social: Array<{ label: string; href: string }>;
   lat: number;
@@ -236,7 +238,11 @@ export function buildSpec(p: Scored): SiteSpec {
       body: [
         `${p.name} is a ${label.toLowerCase()}${where ? where : ""}.`,
         address.length ? `You will find us at ${address.join(", ")}.` : "",
-        summarise(schedule) ? `We are open ${summarise(schedule)}.` : "",
+        // The summary is a sentence opener elsewhere, so it is capitalised;
+        // mid-sentence it is not.
+        summarise(schedule)
+          ? `We are open ${summarise(schedule)!.charAt(0).toLowerCase()}${summarise(schedule)!.slice(1)}.`
+          : "",
       ]
         .filter(Boolean)
         .join(" "),
@@ -280,6 +286,7 @@ export function buildSpec(p: Scored): SiteSpec {
       ? schedule.days.map((d) => `${d.label}: ${d.ranges.length ? d.ranges.join(", ") : "Closed"}`)
       : null,
     hoursRaw: schedule?.unparsed ? schedule.raw : null,
+    hoursNotes: schedule?.notes ?? [],
     cuisine: p.cuisine,
     social,
     lat: p.lat,

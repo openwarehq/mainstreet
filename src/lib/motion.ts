@@ -43,6 +43,7 @@ export const MOTION_DOC = `Motion classes are available on every page — the st
 - class="m-lift"       hover: rises slightly. For cards and buttons
 - class="m-zoom"       on a figure wrapping an <img>: the image scales slowly on hover
 - class="m-line-in"    hover: an underline wipes in from the left. For inline links
+- class="m-draw"       on the {{WORDMARK}} svg: it writes itself on, stroke by stroke
 
 You may write additional @keyframes of your own. If you do, put them inside
 @media (prefers-reduced-motion: no-preference) and, if they are scroll-driven,
@@ -69,6 +70,7 @@ export const MOTION_CSS = `
 }
 @keyframes m-float{0%{transform:translateY(0)}50%{transform:translateY(-9px)}100%{transform:translateY(0)}}
 @keyframes m-hue{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(26deg)}}
+@keyframes m-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
 
 /* Hover and focus movement is safe everywhere: it is short, and it only
    happens because somebody asked for it. */
@@ -139,6 +141,17 @@ export const MOTION_CSS = `
     }
   }
 
+  /* The drawn wordmark writes itself on, one stroke after another.
+     Every path carries pathLength="100", so a single dasharray works for a
+     hairline apostrophe and a whole capital W alike — no measuring, and
+     therefore no script. The per-stroke delay comes from --i, set inline on
+     each path by the generator. */
+  .m-draw path{
+    stroke-dasharray:100;stroke-dashoffset:100;
+    animation:m-draw .58s cubic-bezier(.55,.05,.3,1) both;
+    animation-delay:calc(var(--i,0) * .052s + .12s);
+  }
+
   /* Ambient, unending, and therefore the two most likely to be unwelcome —
      both are off entirely under reduced motion, like everything else here. */
   .m-aurora{animation:m-aurora 34s ease-in-out infinite;will-change:transform}
@@ -158,6 +171,7 @@ export const MOTION_CSS = `
 /* Nothing moves for anybody who has asked for that. Not a soft version — none
    of it. The page still reads exactly the same. */
 @media (prefers-reduced-motion: reduce){
+  .m-draw path{animation:none !important;stroke-dashoffset:0 !important}
   .m-in,.m-rise,.m-fade,.m-wipe,.m-grow,.m-parallax,.m-aurora,.m-float,.m-hue,.m-stagger > *,.m-mask .m-line{
     animation:none !important;opacity:1 !important;transform:none !important;clip-path:none !important;
   }
