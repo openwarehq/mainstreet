@@ -62,8 +62,16 @@ export class DesignRejected extends Error {
  * Each is written as instructions to a designer, not adjectives, because
  * "editorial" produces a mood and "the headline breaks across three lines at
  * 12vw, flush left, with the section index set in the margin" produces a page.
+ *
+ * Some of them own the corner radius outright. The palette generates one, which
+ * is right when the direction has no opinion — it is another axis of variation
+ * between two businesses in the same category. But "zero corner radius
+ * anywhere" and "large corner radii on every surface" *are* the brief, and a
+ * palette that hands a boutique page 2px has overruled the design. Where a
+ * direction states a radius in words it states it in the number too; everywhere
+ * else the palette still decides.
  */
-const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
+export const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string; radius?: number }> = [
   {
     name: "editorial",
     moods: ["elegant", "warm", "modern"],
@@ -73,6 +81,7 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
   {
     name: "swiss",
     moods: ["clean", "modern", "bold"],
+    radius: 0,
     brief:
       "Strict grid, no decoration. Twelve columns, everything flush left to a column edge, zero corner radius anywhere. Type does the work: two sizes only for headings, uppercase labels at 11px with 0.18em tracking. Colour appears as flat blocks, not gradients. Generous top padding, tight internal spacing. Nothing is centred.",
   },
@@ -85,6 +94,7 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
   {
     name: "brutalist",
     moods: ["bold", "modern"],
+    radius: 0,
     brief:
       // Not coordinates. Latitude printed as visible text is a run of eight
       // digits, which the audit reads as a phone number that is not on record —
@@ -94,8 +104,9 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
   {
     name: "boutique",
     moods: ["elegant", "clean", "warm"],
+    radius: 28,
     brief:
-      "Soft and generous. Large corner radii on every surface, pill-shaped buttons, plenty of empty space, a centred hero with a short headline and one line beneath it. Photographs in rounded frames with a soft shadow. Muted, low-contrast section backgrounds alternating with the page colour. Everything calm and unhurried.",
+      "Soft, warm and expensive-looking. The page sits on its background colour with a barely-there radial lightening behind the top of the hero. Everything is rounded generously and everything floats: buttons are full pills, panels and photographs have 28px corners, and every raised thing carries a three-layer shadow — a 1px contact shadow, a mid-range soft one, and a wide diffuse one — so it reads as lifted rather than outlined. Borders are a last resort. The hero sets an enormous display headline flush left, then puts the introductory paragraph and its two buttons over on the *right*, right-aligned, which is the asymmetry that makes it look designed rather than centred. The buttons come as a pair: one filled in the ink colour, one white. Below the hero a wide photograph in a 28px frame, with a second, smaller rounded photograph overlapping its lower-left corner. Generous vertical rhythm throughout — nothing is tight.",
   },
   {
     name: "split",
@@ -223,7 +234,7 @@ Declare them as custom properties on :root and use them throughout.
   --accent-2: ${p.accent2} supporting colour, for gradients and second-level emphasis
   --line: ${p.line}        borders and rules
 
-The page is ${p.dark ? "dark" : "light"}. Corner radius: ${p.radius}px — apply it consistently, and if it is 0 let nothing be rounded.
+The page is ${p.dark ? "dark" : "light"}. Corner radius: ${direction.radius ?? p.radius}px — apply it consistently, and if it is 0 let nothing be rounded.${direction.radius !== undefined ? ` (This radius comes from the "${direction.name}" brief and overrides the palette's, because it is part of the design rather than the colour.)` : ""}
 
 Display face: ${p.display}
 Body face: ${p.body}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { audit } from "../src/lib/audit";
-import { assemble, directionFor } from "../src/lib/design";
+import { assemble, directionFor, DIRECTIONS } from "../src/lib/design";
 import { price } from "../src/lib/claude";
 import { scoreProspect } from "../src/lib/score";
 import { buildSpec, type SiteSpec } from "../src/lib/spec";
@@ -292,6 +292,26 @@ describe("art direction", () => {
     const names = ["Alba Coffee", "Barmuda", "Green Mushroom", "Mary's", "Washoku", "Lune", "Pico", "Everleigh"];
     const briefs = new Set(names.map((n) => directionFor(spec({ name: n })).name));
     expect(briefs.size).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("radius", () => {
+  it("lets a direction that is about its corners keep them", () => {
+    // Cooper's Hotel generates a 2px radius, which is a fine default and the
+    // opposite of what "large corner radii on every surface" asks for.
+    const swiss = DIRECTIONS.find((d) => d.name === "swiss")!;
+    const boutique = DIRECTIONS.find((d) => d.name === "boutique")!;
+    expect(swiss.radius).toBe(0);
+    expect(boutique.radius).toBe(28);
+  });
+
+  it("leaves the palette in charge everywhere else", () => {
+    // Most directions have no opinion, and there the generated radius is one
+    // more thing that makes two businesses in a category look different.
+    const opinionless = DIRECTIONS.filter((d) => d.radius === undefined).map((d) => d.name);
+    expect(opinionless).toContain("editorial");
+    expect(opinionless).toContain("cinematic");
+    expect(opinionless.length).toBeGreaterThan(DIRECTIONS.length / 2);
   });
 });
 

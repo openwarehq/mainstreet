@@ -80,6 +80,12 @@ Twelve art directions, picked from a hash of the business name — `editorial`,
 `swiss`, `cinematic`, `brutalist`, `boutique`, `split`, `catalogue`, `marquee`,
 `quiet`, `collage`, `service`, `gallery` and `liquidglass`.
 
+Three of them own their corner radius outright. The palette generates one, which
+is right when the direction has no opinion — it is another axis of variation
+between two businesses in the same category. But "zero corner radius anywhere"
+and "large corner radii on every surface" *are* the brief, and a palette that
+hands a boutique page 2px has overruled the design.
+
 Or design one yourself. `npm run brief -- "<business>"` prints the facts, the
 palette, the art direction and the imagery — the exact brief the model gets —
 and caches it; `npm run place -- drafts/<slug>.html` puts your page through the
@@ -231,9 +237,16 @@ a business's own site is worse than printing none, because somebody drives there
 
 ## Examples
 
-`examples/` holds seven finished pages, built for seven real Newtown businesses
+`examples/` holds eight finished pages, built for eight real Newtown businesses
 that have no website of their own. Open any of them in a browser — they are
 single files.
+
+**Cooper's Hotel** is the one to look at first: `boutique`, and the closest to
+what a paid agency would hand over. Warm cream ground with a barely-there
+radial lightening, coffee-brown ink, soft pill buttons that lift on hover, a
+wide photograph in a 28px frame with a second one overlapping its corner. Every
+raised thing carries three shadow layers, because one shadow reads as a border
+and three read as height.
 
 Three of them are the `liquidglass` direction: frosted panels floating over a
 colour field built from the business's own palette, with the aurora drifting
@@ -291,7 +304,7 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 116 tests
+npm test          # 118 tests
 npm run typecheck
 npm run build
 ```
