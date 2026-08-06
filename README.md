@@ -76,6 +76,12 @@ credits, same draft banner.
 npm run design:one -- "Alba Coffee" cafe   # one site, to check the key works
 ```
 
+Or design one yourself. `npm run brief -- "<business>"` prints the facts, the
+palette, the art direction and the imagery — the exact brief the model gets —
+and caches it; `npm run place -- drafts/<slug>.html` puts your page through the
+same gate the model's output goes through and refuses it the same way. The audit
+is not something the API path opts into.
+
 Three sites are designed at once. Each run reports tokens and cost per site; a
 model that is not in the price table is reported as **unpriced** rather than
 free, because silently showing $0 for work that cost money is the one accounting

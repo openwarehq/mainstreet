@@ -8,3 +8,5 @@ sites/
 .DS_Store
 next-env.d.ts
 tsconfig.tsbuildinfo
+.briefs
+drafts

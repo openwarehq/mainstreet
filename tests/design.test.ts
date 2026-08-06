@@ -75,6 +75,24 @@ describe("the fact audit", () => {
     expect(v.map((x) => x.rule)).not.toContain("phone number");
   });
 
+  it("does not run two adjacent blocks into one number", () => {
+    // The first real page this audit saw was rejected for exactly this: a phone
+    // number in one block, the section label "01" in the next, read as the
+    // single run "+61 2 9516 3341 01". Numbered sections are in two of the art
+    // directions, so it would have fired on a large share of real pages.
+    const v = audit(
+      page(`<dd><a href="tel:+61295163341">+61 2 9516 3341</a></dd>
+            <p class="lab"><b>01</b> — Get in touch</p>`),
+      facts,
+    );
+    expect(v.map((x) => x.rule)).not.toContain("phone number");
+  });
+
+  it("still reads a claim split across inline tags as one sentence", () => {
+    const v = audit(page(`<p>Serving Newtown <em>since</em> <b>1998</b>.</p>`), facts);
+    expect(v.map((x) => x.rule)).toContain("trading history");
+  });
+
   it("catches an invented email when none is on record", () => {
     const v = audit(page(`<a href="mailto:hello@albacoffee.com">hello@albacoffee.com</a>`), facts);
     expect(v.map((x) => x.rule)).toContain("email address");

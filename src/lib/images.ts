@@ -53,6 +53,45 @@ const QUERIES: Record<string, string[]> = {
 };
 
 /**
+ * Overrides for the kinds a family query gets visibly wrong.
+ *
+ * Seven families is the right grain for palettes and the wrong grain for
+ * photography: a **pharmacy** sits in `health`, so it was being given photos of
+ * dental surgeries — chairs, drills, a hygienist's tray. Close enough to pass a
+ * filter, nowhere near close enough to put on the page.
+ *
+ * Only the kinds where the family term is actually misleading are listed. The
+ * rest inherit, because a bespoke query per category is a hundred queries to
+ * keep working and the family term is genuinely fine for most of them.
+ */
+const KIND_QUERIES: Record<string, string[]> = {
+  pharmacy: ["pharmacy interior", "drugstore interior"],
+  veterinary: ["veterinary clinic", "animal hospital"],
+  optician: ["optician shop", "eyewear store"],
+  bakery: ["bakery interior", "bakery shop"],
+  butcher: ["butcher shop", "butchery interior"],
+  greengrocer: ["greengrocer shop", "vegetable market"],
+  pub: ["pub interior", "bar interior"],
+  bar: ["bar interior", "cocktail bar"],
+  florist: ["flower shop", "florist shop"],
+  jewelry: ["jewellery shop", "jewelry store"],
+  bicycle: ["bicycle shop", "bike workshop"],
+  pet: ["pet shop", "pet store"],
+  car_repair: ["auto repair", "car workshop"],
+  hardware: ["hardware store", "tool shop"],
+  tattoo: ["tattoo studio", "tattoo parlour"],
+  dance: ["dance studio", "ballet studio"],
+  photographer: ["photography studio", "photo studio"],
+  lawyer: ["law library", "conference room"],
+  childcare: ["kindergarten classroom", "nursery classroom"],
+};
+
+/** The search terms for a category, most specific first. */
+export function queriesFor(kind: string, family: string): string[] {
+  return KIND_QUERIES[kind] ?? QUERIES[family] ?? QUERIES.retail;
+}
+
+/**
  * Titles that mean "archive", not "photograph".
  *
  * Commons holds enormous quantities of scanned documents, museum artworks and
@@ -147,8 +186,7 @@ async function searchCommons(term: string): Promise<CommonsPage[]> {
   }
 }
 
-async function fetchPool(family: string): Promise<Photo[]> {
-  const terms = QUERIES[family] ?? QUERIES.retail;
+async function fetchPool(key: string, terms: string[]): Promise<Photo[]> {
   const batches = await Promise.all(terms.map(searchCommons));
   const pages = batches.flat();
   const out: Photo[] = [];
@@ -207,11 +245,19 @@ async function fetchPool(family: string): Promise<Photo[]> {
   return out.sort((a, b) => b.rank - a.rank);
 }
 
-export function imagePool(family: string): Promise<Photo[]> {
-  const hit = pools.get(family);
+/**
+ * The pool for a category, fetched once per process.
+ *
+ * Keyed on the terms rather than the family, so the kinds that override their
+ * family query get their own pool and the ones that inherit still share.
+ */
+export function imagePool(kind: string, family: string): Promise<Photo[]> {
+  const terms = queriesFor(kind, family);
+  const key = terms.join("|");
+  const hit = pools.get(key);
   if (hit) return hit;
-  const p = fetchPool(family);
-  pools.set(family, p);
+  const p = fetchPool(key, terms);
+  pools.set(key, p);
   return p;
 }
 

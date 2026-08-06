@@ -8,7 +8,9 @@
     "start": "next start -p ${PORT:-4340}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "design:one": "tsx --env-file-if-exists=.env.local scripts/design-one.mts"
+    "design:one": "tsx --env-file-if-exists=.env.local scripts/design-one.mts",
+    "brief": "tsx --env-file-if-exists=.env.local scripts/brief.mts",
+    "place": "tsx --env-file-if-exists=.env.local scripts/place.mts"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",

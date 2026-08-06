@@ -323,7 +323,7 @@ export function buildSpec(p: Scored): SiteSpec {
 export async function collectAssets(spec: SiteSpec): Promise<SiteAssets> {
   const family = familyOf(spec.category);
   const [pool, map] = await Promise.all([
-    imagePool(family),
+    imagePool(spec.category, family),
     staticMap(spec.lat, spec.lon, { zoom: 16, cols: 4, rows: 2, accent: spec.palette.accent }),
   ]);
   return {

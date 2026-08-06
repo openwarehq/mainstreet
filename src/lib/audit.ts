@@ -67,15 +67,39 @@ const ALLOWED_HOSTS = [
   "instagram.com",
 ];
 
-/** Strips tags so claim patterns are matched against what a visitor reads. */
+/**
+ * Elements a reader sees a break at.
+ *
+ * The distinction matters more than it looks. Collapsing *every* tag to a space
+ * runs separate blocks together into one line, and the first real page this
+ * audit ever saw was rejected because of it: a phone number in one block was
+ * followed by the section label `01` in the next, and
+ *
+ *     +61 2 9517 1333        01 — Get it booked in
+ *
+ * became the single run `+61 2 9517 1333 01`, which is not the number on
+ * record. Numbered sections are in two of the art-direction briefs, so this
+ * would have fired on a large share of real pages.
+ */
+const BLOCK =
+  /^\/?(?:p|div|section|article|header|footer|main|aside|nav|h[1-6]|ul|ol|li|dl|dt|dd|table|thead|tbody|tfoot|tr|td|th|figure|figcaption|blockquote|address|br|hr|form|fieldset|legend|pre|hgroup|details|summary)\b/i;
+
+/**
+ * What a visitor reads, one line per block.
+ *
+ * Inline tags become a space so a claim split across `<strong>` still reads as
+ * one sentence; block tags become a newline so two unrelated blocks never merge
+ * into one number.
+ */
 export function visibleText(html: string): string {
   return html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, "\n")
+    .replace(/<script[\s\S]*?<\/script>/gi, "\n")
     .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<([^>]+)>/g, (_m, tag: string) => (BLOCK.test(tag) ? "\n" : " "))
     .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ ?\n[\s\n]*/g, "\n")
     .trim();
 }
 
@@ -130,25 +154,32 @@ export function audit(html: string, facts: Facts): Violation[] {
   }
 
   // ── invention ─────────────────────────────────────────────────────────────
-  const text = visibleText(html);
+  const lines = visibleText(html).split("\n");
+  // Claims read as prose, so blocks are joined back up — a sentence broken
+  // across an inline tag is still one sentence.
+  const prose = lines.join(" ");
 
   for (const c of CLAIMS) {
-    const m = text.match(c.re);
+    const m = prose.match(c.re);
     if (m) add("invention", c.rule, `"${m[0]}" — nothing verifies this`);
   }
 
+  // Contact details are matched per block, because two adjacent blocks are two
+  // separate things however close together they render.
   const known = facts.phone ? digits(facts.phone) : null;
-  for (const cand of phoneCandidates(text)) {
-    const d = digits(cand);
-    // Trailing/leading country-code differences are the same number.
-    const same = known && (d.endsWith(known.slice(-8)) || known.endsWith(d.slice(-8)));
-    if (!same) add("invention", "phone number", `"${cand}" is not the number on record`);
-  }
-
   const knownEmail = facts.email?.toLowerCase() ?? null;
-  for (const m of text.matchAll(/[\w.+-]+@[\w-]+\.[\w.-]+/g)) {
-    if (m[0].toLowerCase() !== knownEmail)
-      add("invention", "email address", `"${m[0]}" is not the address on record`);
+
+  for (const line of lines) {
+    for (const cand of phoneCandidates(line)) {
+      const d = digits(cand);
+      // Trailing/leading country-code differences are the same number.
+      const same = known && (d.endsWith(known.slice(-8)) || known.endsWith(d.slice(-8)));
+      if (!same) add("invention", "phone number", `"${cand}" is not the number on record`);
+    }
+    for (const m of line.matchAll(/[\w.+-]+@[\w-]+\.[\w.-]+/g)) {
+      if (m[0].toLowerCase() !== knownEmail)
+        add("invention", "email address", `"${m[0]}" is not the address on record`);
+    }
   }
 
   return v;

@@ -85,7 +85,10 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
     name: "brutalist",
     moods: ["bold", "modern"],
     brief:
-      "Oversized letterforms at the edge of the viewport, hard 2–3px borders, zero radius, high contrast. Labels in monospace, uppercase, with the category and coordinates treated as data. Blocks offset from each other rather than aligned. Colour used at full strength in large fields. Deliberately structural, not pretty.",
+      // Not coordinates. Latitude printed as visible text is a run of eight
+      // digits, which the audit reads as a phone number that is not on record —
+      // the brief would have been asking for a page that fails.
+      "Oversized letterforms at the edge of the viewport, hard 2–3px borders, zero radius, high contrast. Labels in monospace, uppercase, with the category, the street and the suburb set as field-and-value data rows. Blocks offset from each other rather than aligned. Colour used at full strength in large fields. Deliberately structural, not pretty.",
   },
   {
     name: "boutique",
