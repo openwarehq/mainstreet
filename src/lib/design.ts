@@ -25,6 +25,7 @@
 import { audit, violationReport, type Violation } from "./audit";
 import { complete, DEFAULT_MODEL, hasKey, type Completion } from "./claude";
 import { MOTION_CSS, MOTION_DOC } from "./motion";
+import { scribbleTrace, scribbleUnderline } from "./scribble";
 import { wordmark } from "./wordmark";
 import { hash } from "./palette";
 import type { SiteSpec } from "./spec";
@@ -264,6 +265,20 @@ Use it for the hero, and again small in the header if you want a mark there. Set
 the name in ordinary type as well somewhere on the page — the drawn version is
 uppercase and a logotype, not a substitute for the readable name.
 
+## Drawing on the rest of the page
+
+Two more tokens, and they are what stop a page looking like the hero was
+designed and the rest was typed:
+
+- {{DRAW:Some heading}} sets any short text in the same drawn hand as the
+  wordmark. A pipe breaks the line: {{DRAW:What is|missing}}. Use it for section
+  headings. It brings the readable text with it, hidden, so nothing is lost.
+- {{UNDERLINE}} is a scribbled double underline. Put it under a heading in a
+  wrapper with class="m-scribble" and it draws as it scrolls into view.
+- {{TRACE}} is one long wandering line, drawn by the page scroll itself. Put it
+  once, in a fixed or absolutely positioned container down one side of the page,
+  in a wrapper with class="m-trace", and give it height:100%.
+
 ## The map
 
 Write the exact token {{MAP}} on its own line where the map of the business's location should go, inside whatever section and frame you design for it. It is replaced with an <svg> element that fills its container's width. Give it a container — a frame, a full-bleed band, a panel with the address over it, whatever the art direction calls for. ${spec.assets?.map ? "A map is available for this business, so place the token." : "No map is available for this business — do NOT write the token."}
@@ -398,17 +413,41 @@ function pin(html: string, spec: SiteSpec): string {
 }
 
 /**
- * Draws the name wherever the token appears.
+ * Everything drawn by hand, dropped wherever its token appears.
  *
- * A business with no website has no logotype either, so one is generated and
- * dropped in — the same mark every time for the same name, a different one for
- * the next business. Sized by its container, so the same token works at 15px in
- * a header and at 160px in a hero.
+ * A business with no website has no logotype either, so one is generated —
+ * the same mark every time for the same name, a different one for the next
+ * business. Headings can be set in the same hand, and the page can carry a
+ * scribbled line that the scroll draws. All of it is seeded from the business,
+ * so one page is one hand.
+ *
+ * None of it has an intrinsic size; the container decides.
  */
-function placeWordmark(html: string, spec: SiteSpec): string {
-  if (!html.includes("{{WORDMARK}}")) return html;
-  const mark = wordmark(spec.business);
-  return html.replace(/\{\{WORDMARK\}\}/g, mark.svg);
+function placeDrawings(html: string, spec: SiteSpec): string {
+  let out = html;
+
+  if (out.includes("{{WORDMARK}}")) {
+    out = out.replace(/\{\{WORDMARK\}\}/g, wordmark(spec.business).svg);
+  }
+
+  // {{DRAW:What is|missing}} — any short text in the same hand as the mark.
+  // A pipe breaks the line, because a newline inside a token is unwriteable.
+  out = out.replace(/\{\{DRAW:([^}]{1,80})\}\}/g, (_m, text: string) => {
+    const lines = text.split("|").map((t) => t.trim()).filter(Boolean);
+    const mark = wordmark(lines.join("\n"), { seed: spec.business });
+    // The readable text stays in the document. A heading that exists only as
+    // stroked paths is a heading search engines and screen readers cannot read,
+    // and drawn type is a treatment, not an excuse to delete the words.
+    return `${mark.svg}<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap">${lines.join(" ")}</span>`;
+  });
+
+  if (out.includes("{{UNDERLINE}}")) {
+    out = out.replace(/\{\{UNDERLINE\}\}/g, scribbleUnderline(spec.business));
+  }
+  if (out.includes("{{TRACE}}")) {
+    out = out.replace(/\{\{TRACE\}\}/g, scribbleTrace(spec.business));
+  }
+  return out;
 }
 
 /** Drops the map in, or appends one if the model forgot the token. */
@@ -440,7 +479,7 @@ function placeMap(html: string, spec: SiteSpec): string {
  * *misbehaves*.
  */
 export function assemble(html: string, spec: SiteSpec): string {
-  return pin(placeWordmark(placeMap(extract(html), spec), spec), spec);
+  return pin(placeDrawings(placeMap(extract(html), spec), spec), spec);
 }
 
 export function designerAvailable(): boolean {

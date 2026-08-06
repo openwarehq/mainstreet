@@ -35,7 +35,8 @@ import { hash } from "./palette";
 /** Advance width per glyph, in grid units. Everything else is 10 wide. */
 const WIDTHS: Record<string, number> = {
   I: 2, J: 8, L: 8.6, M: 12, W: 12.6, T: 9.4, Y: 9.4, "1": 6,
-  "'": 2.4, ".": 2.4, "-": 7, "&": 11.4, " ": 5,
+  "'": 2.4, ".": 2.4, ",": 2.6, "-": 7, "&": 11.4, "+": 11, "/": 8, "!": 2,
+  "?": 9, " ": 5,
 };
 
 /**
@@ -103,6 +104,11 @@ const GLYPHS: Record<string, string[]> = {
   ],
 
   "'": ["M1.2 0 L0.6 4.6"],
+  ",": ["M1.6 12.6 C1.6 13.4 1.6 14 0.4 15.6"],
+  "+": ["M3.6 7 L10.4 7", "M7 3.6 L7 10.4"],
+  "/": ["M0.6 14.4 L7.4 -0.4"],
+  "!": ["M1 0 L1 9.6", "M1 13.4 L1 14"],
+  "?": ["M0.8 3 C0.8 -1 8.6 -1 8.6 3.4 C8.6 6.6 4.6 7.2 4.6 10", "M4.6 13.4 L4.6 14"],
   ".": ["M1.2 13.4 L1.2 14"],
   "-": ["M0.6 7.4 L6.4 7.4"],
   "&": [
@@ -134,13 +140,15 @@ function picker(seed: string) {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * Draws the name.
+ * Draws the name. Newlines break it into stacked lines.
  *
  * `seed` defaults to the name, so the mark is stable. Anything with no glyph is
  * dropped rather than substituted — a box where a letter should be is worse
  * than a shorter word, and the caller is told what went.
  */
 export function wordmark(name: string, opts: { seed?: string; className?: string } = {}): Wordmark {
+  // Seeded on the text unless told otherwise. A heading drawn on a page seeds
+  // from the *business* so every mark on that page shares one hand.
   const pick = picker(opts.seed ?? name);
 
   // Every decision below is drawn once, in a fixed order, so the mark is stable.
@@ -150,14 +158,20 @@ export function wordmark(name: string, opts: { seed?: string; className?: string
   const cap = pick() < 0.68 ? "round" : "butt";
   const jitter = 0.18 + pick() * 0.34;
 
-  const letters = [...name.toUpperCase()];
+  // A heading is often two short lines rather than one long one, and a
+  // logotype set on one line at heading size is unreadable on a phone.
+  const lines = name.toUpperCase().split("\n");
   const unsupported: string[] = [];
 
-  let x = 0;
   const parts: string[] = [];
   let drawn = 0;
+  let widest = 0;
 
-  for (const ch of letters) {
+  const LINE_HEIGHT = 18.5;
+  let lineIndex = 0;
+  for (const line of lines) {
+  let x = 0;
+  for (const ch of [...line]) {
     const strokes = GLYPHS[ch];
     if (!strokes) {
       if (ch.trim()) unsupported.push(ch);
@@ -177,18 +191,22 @@ export function wordmark(name: string, opts: { seed?: string; className?: string
         )
         .join("");
       parts.push(
-        `<g transform="translate(${round2(x)} ${dy}) rotate(${rot} ${w / 2} 7)">${paths}</g>`,
+        `<g transform="translate(${round2(x)} ${round2(dy + lineIndex * LINE_HEIGHT)}) rotate(${rot} ${w / 2} 7)">${paths}</g>`,
       );
       drawn += strokes.length;
     }
     x += w + tracking;
   }
+    widest = Math.max(widest, x - tracking);
+    lineIndex++;
+  }
 
-  const width = round2(Math.max(x - tracking, 1));
+  const width = round2(Math.max(widest, 1));
   // Room for the slant, the overshoot on round forms, and the stroke itself.
   const pad = round2(weight + 1.4 + Math.abs(Math.tan((slant * Math.PI) / 180)) * 14);
 
-  const svg = `<svg class="${opts.className ?? "wm"}" viewBox="${-pad} ${-1.6} ${round2(width + pad * 2)} ${17.2}" role="img" aria-label="${name.replace(/[<>&"]/g, "")}" fill="none" stroke="currentColor" stroke-width="${weight}" stroke-linecap="${cap}" stroke-linejoin="round">
+  const height = round2(17.2 + (lines.length - 1) * LINE_HEIGHT);
+  const svg = `<svg class="${opts.className ?? "wm"}" viewBox="${-pad} ${-1.6} ${round2(width + pad * 2)} ${height}" role="img" aria-label="${name.replace(/\s+/g, " ").replace(/[<>&"]/g, "")}" fill="none" stroke="currentColor" stroke-width="${weight}" stroke-linecap="${cap}" stroke-linejoin="round">
   <g transform="skewX(${-slant})">${parts.join("")}</g>
 </svg>`;
 

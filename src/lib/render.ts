@@ -1,4 +1,5 @@
 import { MOTION_CSS } from "./motion";
+import { scribbleTrace, scribbleUnderline } from "./scribble";
 import { wordmark } from "./wordmark";
 import type { Palette, Section, SiteSpec } from "./spec";
 
@@ -89,6 +90,18 @@ function heroArt(spec: SiteSpec): string {
 </svg>`;
 }
 
+/**
+ * A section heading, drawn in the same hand as the name.
+ *
+ * The hero was drawn and everything under it was typeset, which made every page
+ * read as two pages stuck together. The readable text comes along hidden, so a
+ * drawn heading is still a heading to a screen reader and to search.
+ */
+function drawnHeading(text: string, spec: SiteSpec, cls = ""): string {
+  const mark = wordmark(text, { seed: spec.business });
+  return `<h2 class="drawn ${cls}">${mark.svg}<span class="sr">${esc(text)}</span></h2>`;
+}
+
 function css(p: Palette): string {
   return `
 :root{
@@ -112,6 +125,17 @@ h1{font-size:clamp(38px,7vw,68px);letter-spacing:-0.02em}
 .wordmark{display:block;max-width:min(760px,88%)}
 .wordmark svg{display:block;width:100%;height:auto;color:var(--ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* Section headings are drawn in the same alphabet as the name, so the page is
+   one hand rather than a drawn hero on a typeset page. */
+.drawn{display:block;position:relative;margin:0 0 8px;max-width:min(520px,92%)}
+.drawn svg{display:block;width:100%;height:auto;color:var(--ink)}
+.scribble{display:block;width:min(210px,52%);margin:2px 0 0;color:var(--accent)}
+.scribble svg{display:block;width:100%;height:14px}
+/* One long wandering line down the margin, drawn by the scroll itself. There is
+   no margin to put it in on a narrow screen, so there is no line. */
+.trace{position:fixed;left:max(10px,calc((100vw - 1040px)/2 - 40px));top:0;bottom:0;width:32px;color:var(--accent);opacity:.45;pointer-events:none;z-index:0}
+.trace svg{display:block;width:100%;height:100%}
+@media (max-width:1180px){.trace{display:none}}
 h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-0.01em}
 h3{font-size:19px}
 p{margin:0 0 1em}
@@ -281,13 +305,14 @@ function renderSection(s: Section, spec: SiteSpec): string {
 
     case "intro":
       return `<section id="about" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
+  <span class="scribble m-scribble">${scribbleUnderline(spec.business)}</span>
   <p class="lede">${esc(s.body)}</p>
 </div></section>`;
 
     case "services":
       return `<section id="services" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
   <div class="grid m-stagger">
     ${s.items
       .map((i) => `<div class="card m-lift"><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p></div>`)
@@ -301,12 +326,12 @@ function renderSection(s: Section, spec: SiteSpec): string {
       if (s.rawNote) {
         // Unparsed hours are shown exactly as mapped rather than guessed at.
         return `<section id="hours" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
   <div class="hours"><div class="row"><span class="day">As listed</span><span class="times">${esc(s.rawNote)}</span></div></div>
 </div></section>`;
       }
       return `<section id="hours" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
   <div class="hours">
     ${s.schedule.days
       .map((d) => {
@@ -320,7 +345,7 @@ function renderSection(s: Section, spec: SiteSpec): string {
 
     case "location":
       return `<section id="find" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
   <div class="split">
     <div>
       <address>${s.address.map(esc).join("<br>")}</address>
@@ -342,7 +367,7 @@ function renderSection(s: Section, spec: SiteSpec): string {
       if (s.email) items.push(`<li>Email <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></li>`);
       if (!items.length) items.push(`<li style="color:var(--muted)">Contact details to be added.</li>`);
       return `<section id="contact" class="m-rise"><div class="wrap">
-  <h2>${esc(s.heading)}</h2>
+  ${drawnHeading(s.heading, spec)}
   <div class="split">
     <ul class="contact-list">${items.join("")}</ul>
     ${
@@ -363,7 +388,7 @@ function renderGallery(spec: SiteSpec): string {
   const photos = spec.assets?.photos?.slice(1, 3) ?? [];
   if (photos.length < 2) return "";
   return `<section id="gallery" class="m-rise"><div class="wrap">
-  <h2>The look</h2>
+  ${drawnHeading("The look", spec)}
   <p class="lede">Reference imagery for the design. Swap in your own photographs before this goes live.</p>
   <div class="gallery m-stagger">
     ${photos
@@ -444,6 +469,7 @@ export function renderSite(spec: SiteSpec): string {
 </head>
 <body>
 <div class="m-bar"></div>
+<div class="trace m-trace">${scribbleTrace(spec.business)}</div>
 ${spec.draft ? `<div class="draft">Draft proposal for ${esc(spec.business)} — not an official website. Details from public map data and yet to be confirmed.</div>` : ""}
 <header class="nav"><div class="wrap">
   <a class="brand" href="#">${esc(spec.business)}</a>

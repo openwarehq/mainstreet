@@ -43,7 +43,9 @@ export const MOTION_DOC = `Motion classes are available on every page — the st
 - class="m-lift"       hover: rises slightly. For cards and buttons
 - class="m-zoom"       on a figure wrapping an <img>: the image scales slowly on hover
 - class="m-line-in"    hover: an underline wipes in from the left. For inline links
-- class="m-draw"       on the {{WORDMARK}} svg: it writes itself on, stroke by stroke
+- class="m-draw"       on drawn lettering: it writes itself on, stroke by stroke
+- class="m-scribble"   on a {{UNDERLINE}}: the scribble draws as it scrolls into view
+- class="m-trace"      on a {{TRACE}}: the long line draws in step with the page scroll
 
 You may write additional @keyframes of your own. If you do, put them inside
 @media (prefers-reduced-motion: no-preference) and, if they are scroll-driven,
@@ -129,6 +131,13 @@ export const MOTION_CSS = `
       animation-range:cover 0% cover 100%;will-change:transform;
     }
 
+    /* A scribbled flourish drawing itself as it comes into view. */
+    .m-scribble path{
+      stroke-dasharray:100;stroke-dashoffset:100;
+      animation:m-draw linear both;animation-timeline:view();
+      animation-range:entry 16% cover 40%;
+    }
+
     /* The colour field shifts hue as the page scrolls. On a glass page this is
        what makes it read as lit rather than painted — the light behind the
        panels changes while the panels do not. */
@@ -159,6 +168,12 @@ export const MOTION_CSS = `
   .m-float-2{animation-duration:9.5s;animation-delay:-2s}
 
   @supports (animation-timeline: scroll()){
+    /* The long line down the page, drawn by the scroll itself. */
+    .m-trace path{
+      stroke-dasharray:100;stroke-dashoffset:100;
+      animation:m-draw linear both;animation-timeline:scroll(root);
+    }
+
     .m-bar{
       position:fixed;inset:0 0 auto 0;height:3px;z-index:9999;
       transform-origin:0 50%;transform:scaleX(0);pointer-events:none;
@@ -171,7 +186,9 @@ export const MOTION_CSS = `
 /* Nothing moves for anybody who has asked for that. Not a soft version — none
    of it. The page still reads exactly the same. */
 @media (prefers-reduced-motion: reduce){
-  .m-draw path{animation:none !important;stroke-dashoffset:0 !important}
+  .m-draw path,.m-scribble path,.m-trace path{
+    animation:none !important;stroke-dashoffset:0 !important;
+  }
   .m-in,.m-rise,.m-fade,.m-wipe,.m-grow,.m-parallax,.m-aurora,.m-float,.m-hue,.m-stagger > *,.m-mask .m-line{
     animation:none !important;opacity:1 !important;transform:none !important;clip-path:none !important;
   }

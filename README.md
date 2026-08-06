@@ -97,6 +97,33 @@ model that is not in the price table is reported as **unpriced** rather than
 free, because silently showing $0 for work that cost money is the one accounting
 failure that matters.
 
+### The name is drawn, not typeset
+
+A business with no website has no logotype either, so one is generated. Every
+glyph is a monoline skeleton on a 10×14 grid — the constructed style, which is a
+real lettering tradition and the one that survives being generated, because its
+whole character is that it looks built rather than written.
+
+The letterforms are fixed; the drawing is seeded from the name — stroke weight,
+slant, tracking, round or squared terminals, and a per-glyph shift and rotation
+of a fraction of a degree, which is what stops it reading as a font and starts
+it reading as lettering.
+
+**It writes itself on.** Every path carries `pathLength="100"`, which normalises
+any stroke to the same nominal length whatever its real geometry, so one CSS
+animation writes a hairline apostrophe and a capital W at the same rate — with
+no measuring, and therefore still no JavaScript.
+
+Section headings are set in the same hand, seeded from the *business* rather
+than from their own text, so one page is one hand rather than a drawn hero on a
+typeset page. The readable text travels with it, hidden, because a heading that
+exists only as stroked paths is a heading search engines and screen readers
+cannot read.
+
+There are scribbles too: a double underline that draws as it scrolls into view,
+and one long wandering line down the margin drawn by the page scroll itself — a
+progress bar that does not look like a progress bar.
+
 ### It moves, with no JavaScript
 
 Every page animates: content reveals as it scrolls in, the hero photograph
@@ -304,7 +331,7 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 118 tests
+npm test          # 132 tests
 npm run typecheck
 npm run build
 ```

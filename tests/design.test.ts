@@ -256,6 +256,41 @@ describe("assembling the model's output", () => {
     expect((own.match(/class="m-bar"/g) ?? []).length).toBe(1);
   });
 
+  it("draws the name, and keeps it readable", () => {
+    const out = assemble(`<!doctype html><html><body><h1>{{WORDMARK}}</h1></body></html>`, s);
+    expect(out).not.toContain("{{WORDMARK}}");
+    expect(out).toContain("<svg");
+    expect(out).toContain('aria-label="Alba Coffee"');
+    // pathLength normalises every stroke, which is what lets one CSS animation
+    // write a hairline apostrophe and a capital W at the same rate.
+    expect(out).toContain('pathLength="100"');
+  });
+
+  it("draws a heading without deleting the words", () => {
+    // A heading that exists only as stroked paths is a heading search engines
+    // and screen readers cannot read.
+    const out = assemble(`<!doctype html><html><body><h2>{{DRAW:What is|missing}}</h2></body></html>`, s);
+    expect(out).not.toContain("{{DRAW");
+    expect(out).toContain("What is missing");
+    expect(out).toContain('aria-label="What is missing"');
+  });
+
+  it("gives one page one hand", () => {
+    // The heading is seeded from the business, not from its own text, so every
+    // drawn thing on a page shares a stroke weight and a slant.
+    const a = assemble(`<!doctype html><html><body>{{DRAW:Hours}}</body></html>`, s);
+    const b = assemble(`<!doctype html><html><body>{{WORDMARK}}</body></html>`, s);
+    const weight = (h: string) => h.match(/stroke-width="([\d.]+)"/)?.[1];
+    expect(weight(a)).toBe(weight(b));
+  });
+
+  it("drops the scribbles in", () => {
+    const out = assemble(`<!doctype html><html><body>{{TRACE}}{{UNDERLINE}}</body></html>`, s);
+    expect(out).not.toMatch(/\{\{(TRACE|UNDERLINE)\}\}/);
+    expect(out).toContain("scribble-trace");
+    expect(out).toContain("scribble-rule");
+  });
+
   it("credits the photographer and OpenStreetMap, which the licences require", () => {
     const out = assemble(`<!doctype html><html><body></body></html>`, s);
     expect(out).toContain("A Photographer");
