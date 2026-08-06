@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>scrub</title>
+<style>html,body{margin:0;background:#000}iframe{display:block;border:0}</style>
+<!--
+  A scroll scrubber, for checking the motion on a generated page.
+
+  Headless Chrome screenshots the top of a document and a `#fragment` capture
+  comes back blank, so there is no way from the command line to see what a page
+  looks like a thousand pixels down. This loads the site into a same-origin
+  iframe and scrolls it, which is the only part that needs script — and it is
+  this harness that has it, never the generated page.
+
+    /_scrub.html?slug=barmuda-253346&y=2600&w=1400&h=880
+-->
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = document.getElementById("f");
+  const w = Number(q.get("w") || 1400);
+  const h = Number(q.get("h") || 880);
+  const y = Number(q.get("y") || 0);
+  f.style.width = w + "px";
+  f.style.height = h + "px";
+  f.src = "/api/site/" + (q.get("slug") || "");
+  // Re-applied a few times: photographs land after load and move everything
+  // below them, so a single scroll on the load event lands in the wrong place.
+  const put = () => { try { f.contentWindow.scrollTo(0, y); } catch {} };
+  f.addEventListener("load", put);
+  for (const t of [50, 250, 600, 1200, 2200, 3500]) setTimeout(put, t);
+</script>

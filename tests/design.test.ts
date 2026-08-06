@@ -164,6 +164,21 @@ describe("the fact audit", () => {
     expect(v.map((x) => x.rule)).toContain("length");
   });
 
+  it("rejects a page that animates with no way to turn it off", () => {
+    // Vestibular disorders make unstoppable movement a real harm, and the
+    // escape hatch is one media query.
+    const html = page(`<p>A café on King Street.</p>`, `<style>@keyframes spin{to{transform:rotate(1turn)}}</style>`);
+    expect(audit(html, facts).map((x) => x.rule)).toContain("reduced motion");
+  });
+
+  it("accepts animation that respects the preference", () => {
+    const html = page(
+      `<p>A café on King Street.</p>`,
+      `<style>@media (prefers-reduced-motion: no-preference){@keyframes spin{to{transform:rotate(1turn)}}}</style>`,
+    );
+    expect(audit(html, facts).map((x) => x.rule)).not.toContain("reduced motion");
+  });
+
   it("says nothing about a phone number on a page for a business without one", () => {
     const noPhone = spec({ phone: null }).facts;
     expect(audit(page(`<p>Find us on King Street.</p>`), noPhone)).toEqual([]);
@@ -224,6 +239,21 @@ describe("assembling the model's output", () => {
   it("adds the draft banner whatever the model did", () => {
     const out = assemble(`<!doctype html><html><body><h1>Alba Coffee</h1></body></html>`, s);
     expect(out).toContain("not an official website");
+  });
+
+  it("adds the motion layer, guarded, whatever the page did", () => {
+    const out = assemble(`<!doctype html><html><head></head><body><h1>Alba</h1></body></html>`, s);
+    expect(out).toContain("@keyframes m-rise");
+    // The two things a designer must not be able to get wrong.
+    expect(out).toContain("prefers-reduced-motion: reduce");
+    expect(out).toContain("@supports (animation-timeline: view())");
+  });
+
+  it("adds a scroll progress bar, but not a second one", () => {
+    const plain = assemble(`<!doctype html><html><body><h1>Alba</h1></body></html>`, s);
+    expect((plain.match(/class="m-bar"/g) ?? []).length).toBe(1);
+    const own = assemble(`<!doctype html><html><body><div class="m-bar"></div><h1>Alba</h1></body></html>`, s);
+    expect((own.match(/class="m-bar"/g) ?? []).length).toBe(1);
   });
 
   it("credits the photographer and OpenStreetMap, which the licences require", () => {

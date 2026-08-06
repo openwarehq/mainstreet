@@ -24,6 +24,7 @@
 
 import { audit, violationReport, type Violation } from "./audit";
 import { complete, DEFAULT_MODEL, hasKey, type Completion } from "./claude";
+import { MOTION_CSS, MOTION_DOC } from "./motion";
 import { hash } from "./palette";
 import type { SiteSpec } from "./spec";
 
@@ -79,7 +80,7 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
     name: "cinematic",
     moods: ["warm", "bold", "elegant"],
     brief:
-      "Full-viewport hero photograph, minimum 88vh, with the name set over it at the bottom left and a thin fixed top bar. A heavy bottom-up gradient so the type has ground. Everything after the hero breathes: sections at 140px vertical padding, one idea each, wide measure. The second photograph runs full-bleed edge to edge partway down as a divider.",
+      "Full-viewport hero photograph, minimum 88vh, with the name set over it at the bottom left and a thin sticky top bar (sticky, not fixed — a draft banner is added above it). A heavy bottom-up gradient so the type has ground. Everything after the hero breathes: sections at 140px vertical padding, one idea each, wide measure. The second photograph runs full-bleed edge to edge partway down as a divider.",
   },
   {
     name: "brutalist",
@@ -112,7 +113,7 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
     name: "marquee",
     moods: ["bold", "warm", "modern"],
     brief:
-      "Bands. Full-width horizontal strips of solid accent colour carrying a single oversized line of text, alternating with content sections on the page background. No animation — the bands are static and rely on scale. The name appears at least twice at very large size. Punchy, poster-like, loud.",
+      "Bands. Full-width horizontal strips of solid accent colour carrying a single oversized line of text, alternating with content sections on the page background. The bands themselves do not slide or scroll — they rely on scale, not movement. The name appears at least twice at very large size. Punchy, poster-like, loud.",
   },
   {
     name: "quiet",
@@ -233,6 +234,18 @@ Where a photograph carries text over it, put a gradient scrim behind the text �
 
 Write the exact token {{MAP}} on its own line where the map of the business's location should go, inside whatever section and frame you design for it. It is replaced with an <svg> element that fills its container's width. Give it a container — a frame, a full-bleed band, a panel with the address over it, whatever the art direction calls for. ${spec.assets?.map ? "A map is available for this business, so place the token." : "No map is available for this business — do NOT write the token."}
 
+## Motion
+
+The page ships no JavaScript, and it still moves. CSS scroll-driven animation
+does all of it: content reveals as it scrolls in, the hero drifts, a progress
+bar runs across the top.
+
+${MOTION_DOC}
+
+Use them deliberately rather than everywhere — a page where every element flies
+in is worse than a still one. Reveal the sections, drift the hero, stagger one
+grid, and leave the rest alone.
+
 ## Requirements
 
 - One file. All CSS in a single <style> in the head. No JavaScript of any kind.
@@ -305,22 +318,32 @@ function pin(html: string, spec: SiteSpec): string {
   // 1. Never indexable while it is a draft. Any robots meta the model wrote is
   //    replaced rather than added to, so it cannot contradict this one.
   out = out.replace(/<meta[^>]+name=["']robots["'][^>]*>/gi, "");
-  const robots = `<meta name="robots" content="${spec.draft ? "noindex, nofollow" : "index, follow"}">`;
+  const head = `<meta name="robots" content="${spec.draft ? "noindex, nofollow" : "index, follow"}">
+<style>${MOTION_CSS}</style>`;
   out = /<\/head>/i.test(out)
-    ? out.replace(/<\/head>/i, `${robots}\n</head>`)
+    ? // Last in the head, so the motion utilities win a specificity tie against
+      // anything the page happens to have named the same.
+      out.replace(/<\/head>/i, `${head}\n</head>`)
     : // No head at all. It goes after the opening <html>, never in front of the
       // doctype — a meta tag before the doctype puts the browser into quirks
       // mode, which silently breaks the layout the model just wrote.
-      out.replace(/<html[^>]*>/i, (m) => `${m}\n<head>${robots}</head>`);
+      out.replace(/<html[^>]*>/i, (m) => `${m}\n<head>${head}</head>`);
 
-  // 2. The draft banner. Inline styles only — it must not depend on a class the
+  // 2. The scroll progress bar, if the page did not ask for one itself. It is
+  //    three pixels and it only exists where scroll timelines do, but it is the
+  //    single cheapest signal that a page is alive rather than a screenshot.
+  if (!/class=["'][^"']*\bm-bar\b/.test(out)) {
+    out = out.replace(/<body[^>]*>/i, (m) => `${m}\n<div class="m-bar"></div>`);
+  }
+
+  // 3. The draft banner. Inline styles only — it must not depend on a class the
   //    model may not have written.
   if (spec.draft) {
     const banner = `<div style="background:${p.accent};color:${p.accentInk};font:600 13px/1.5 ${p.body.replace(/"/g, "'")};padding:10px 20px;text-align:center;letter-spacing:.01em">Draft proposal for ${esc(spec.business)} — not an official website. Details come from public map data and are unconfirmed.</div>`;
     out = out.replace(/<body[^>]*>/i, (m) => `${m}\n${banner}`);
   }
 
-  // 3. Credits. CC-BY requires the photographer; ODbL requires OpenStreetMap.
+  // 4. Credits. CC-BY requires the photographer; ODbL requires OpenStreetMap.
   const photos = spec.assets?.photos ?? [];
   const seen = new Set<string>();
   const credits = photos

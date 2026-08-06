@@ -31,7 +31,7 @@ import type { Facts } from "./spec";
 export type Violation = {
   rule: string;
   detail: string;
-  kind: "invention" | "unsafe" | "structure";
+  kind: "invention" | "unsafe" | "structure" | "access";
 };
 
 /**
@@ -142,6 +142,20 @@ export function audit(html: string, facts: Facts): Violation[] {
     add("unsafe", "external stylesheet", "the page links a stylesheet — it must be self-contained");
   if (/@import\s/i.test(html)) add("unsafe", "css import", "@import pulls in a remote stylesheet");
   if (/<iframe[\s>]/i.test(html)) add("unsafe", "iframe", "the page embeds an iframe");
+
+  // ── access ────────────────────────────────────────────────────────────────
+  // A page that animates has to offer a way out of it. Vestibular disorders
+  // make unstoppable movement a real harm rather than a matter of taste, and
+  // the escape hatch is one media query — there is no excuse for omitting it.
+  // Only the page's *own* keyframes are checked: the injected motion layer
+  // carries its own guard and is added after this runs.
+  if (/@keyframes\s/i.test(html) && !/prefers-reduced-motion/i.test(html)) {
+    add(
+      "access",
+      "reduced motion",
+      "the page animates with no prefers-reduced-motion escape",
+    );
+  }
 
   // Every absolute URL has to be somewhere we sanctioned. A model asked for
   // photographs will happily reach for unsplash.com, which is a hotlink to a

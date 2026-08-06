@@ -1,3 +1,4 @@
+import { MOTION_CSS } from "./motion";
 import type { Palette, Section, SiteSpec } from "./spec";
 
 /**
@@ -196,6 +197,7 @@ address{font-style:normal;font-size:17px;line-height:1.9}
 .contact-list li{padding:10px 0;border-bottom:1px solid var(--line)}
 .contact-list li:last-child{border-bottom:0}
 .contact-list a{text-decoration:none;color:var(--accent);font-weight:600}
+.btn,.social a,.nav nav a{transition:background-color .3s,border-color .3s,color .3s,opacity .3s}
 .social{display:flex;gap:12px;margin-top:18px}
 .social a{
   border:1px solid var(--line);border-radius:var(--r);padding:9px 16px;
@@ -239,6 +241,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
   .mapframe{border-radius:var(--r)}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+${MOTION_CSS}
 `.trim();
 }
 
@@ -249,15 +253,15 @@ function renderSection(s: Section, spec: SiteSpec): string {
       return `<div class="hero${photo ? " hero-photo" : ""}">
   <div class="art">${
     photo
-      ? `<img src="${safeHref(photo.url)}" alt="" loading="eager" decoding="async" fetchpriority="high">`
+      ? `<img class="m-parallax" src="${safeHref(photo.url)}" alt="" loading="eager" decoding="async" fetchpriority="high">`
       : heroArt(spec)
   }</div>
   <div class="scrim"></div>
   <div class="inner"><div class="wrap">
-    <span class="eyebrow">${esc(spec.categoryLabel)}${spec.locality ? ` · ${esc(spec.locality)}` : ""}</span>
-    <h1>${esc(s.headline)}</h1>
-    <p class="sub">${esc(s.sub)}</p>
-    <div class="ctas">
+    <span class="eyebrow m-in">${esc(spec.categoryLabel)}${spec.locality ? ` · ${esc(spec.locality)}` : ""}</span>
+    <h1 class="m-mask"><span class="m-line">${esc(s.headline)}</span></h1>
+    <p class="sub m-in m-in-3">${esc(s.sub)}</p>
+    <div class="ctas m-in m-in-4">
       ${s.ctas
         .map(
           (c, i) =>
@@ -270,17 +274,17 @@ function renderSection(s: Section, spec: SiteSpec): string {
     }
 
     case "intro":
-      return `<section id="about"><div class="wrap">
+      return `<section id="about" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
   <p class="lede">${esc(s.body)}</p>
 </div></section>`;
 
     case "services":
-      return `<section id="services"><div class="wrap">
+      return `<section id="services" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
-  <div class="grid">
+  <div class="grid m-stagger">
     ${s.items
-      .map((i) => `<div class="card"><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p></div>`)
+      .map((i) => `<div class="card m-lift"><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p></div>`)
       .join("\n    ")}
   </div>
   ${spec.draft ? `<p class="note">${esc(s.note)}</p>` : ""}
@@ -290,12 +294,12 @@ function renderSection(s: Section, spec: SiteSpec): string {
       if (!s.schedule) return "";
       if (s.rawNote) {
         // Unparsed hours are shown exactly as mapped rather than guessed at.
-        return `<section id="hours"><div class="wrap">
+        return `<section id="hours" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
   <div class="hours"><div class="row"><span class="day">As listed</span><span class="times">${esc(s.rawNote)}</span></div></div>
 </div></section>`;
       }
-      return `<section id="hours"><div class="wrap">
+      return `<section id="hours" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
   <div class="hours">
     ${s.schedule.days
@@ -309,7 +313,7 @@ function renderSection(s: Section, spec: SiteSpec): string {
     }
 
     case "location":
-      return `<section id="find"><div class="wrap">
+      return `<section id="find" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
   <div class="split">
     <div>
@@ -331,7 +335,7 @@ function renderSection(s: Section, spec: SiteSpec): string {
         items.push(`<li>Phone <a href="tel:${esc(s.phone.replace(/\s+/g, ""))}">${esc(s.phone)}</a></li>`);
       if (s.email) items.push(`<li>Email <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></li>`);
       if (!items.length) items.push(`<li style="color:var(--muted)">Contact details to be added.</li>`);
-      return `<section id="contact"><div class="wrap">
+      return `<section id="contact" class="m-rise"><div class="wrap">
   <h2>${esc(s.heading)}</h2>
   <div class="split">
     <ul class="contact-list">${items.join("")}</ul>
@@ -352,14 +356,14 @@ function renderSection(s: Section, spec: SiteSpec): string {
 function renderGallery(spec: SiteSpec): string {
   const photos = spec.assets?.photos?.slice(1, 3) ?? [];
   if (photos.length < 2) return "";
-  return `<section id="gallery"><div class="wrap">
+  return `<section id="gallery" class="m-rise"><div class="wrap">
   <h2>The look</h2>
   <p class="lede">Reference imagery for the design. Swap in your own photographs before this goes live.</p>
-  <div class="gallery">
+  <div class="gallery m-stagger">
     ${photos
       .map(
         (p) =>
-          `<figure><img src="${safeHref(p.url)}" alt="" loading="lazy" decoding="async"></figure>`,
+          `<figure class="m-zoom"><img src="${safeHref(p.url)}" alt="" loading="lazy" decoding="async"></figure>`,
       )
       .join("\n    ")}
   </div>
@@ -378,8 +382,8 @@ function renderMap(spec: SiteSpec): string {
   const loc = spec.sections.find((s) => s.kind === "location");
   const address = loc && loc.kind === "location" ? loc.address : [];
   const { lat, lon } = spec;
-  return `<section id="map" class="mapsection"><div class="wrap">
-  <div class="mapframe">
+  return `<section id="map" class="mapsection m-rise"><div class="wrap">
+  <div class="mapframe m-wipe">
     ${map.svg}
     <div class="mapcard">
       <strong>${esc(spec.business)}</strong>
@@ -433,6 +437,7 @@ export function renderSite(spec: SiteSpec): string {
 <style>${css(spec.palette)}</style>
 </head>
 <body>
+<div class="m-bar"></div>
 ${spec.draft ? `<div class="draft">Draft proposal for ${esc(spec.business)} — not an official website. Details from public map data and yet to be confirmed.</div>` : ""}
 <header class="nav"><div class="wrap">
   <a class="brand" href="#">${esc(spec.business)}</a>

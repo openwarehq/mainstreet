@@ -87,6 +87,29 @@ model that is not in the price table is reported as **unpriced** rather than
 free, because silently showing $0 for work that cost money is the one accounting
 failure that matters.
 
+### It moves, with no JavaScript
+
+Every page animates: content reveals as it scrolls in, the hero photograph
+drifts against the scroll, a progress bar runs across the top, images ease on
+hover. There is still **no script on the page** — CSS scroll-driven animation
+does all of it, keyed off `animation-timeline: view()` and `scroll()`.
+
+The motion layer is **injected**, not asked for, because the two things most
+likely to be got wrong are the two that matter and neither is a design decision:
+
+- **Reduced motion.** Vestibular disorders make unstoppable movement a real
+  harm, not a taste question. Everything is inert under
+  `prefers-reduced-motion: reduce` — not a gentler version, none of it — and the
+  audit rejects a page that writes its own `@keyframes` without that escape.
+- **Degrading.** The obvious way to write a scroll reveal is `opacity: 0` plus
+  an animation that restores it, which in a browser without scroll timelines
+  leaves the whole page invisible. Every scroll-driven rule sits inside
+  `@supports (animation-timeline: view())`, so a browser that cannot animate
+  simply shows the content.
+
+The designer applies classes — `m-rise`, `m-stagger`, `m-parallax`, `m-wipe`,
+`m-mask`, `m-lift`, `m-zoom` — and the guards are not theirs to forget.
+
 ### Twelve businesses, twelve palettes
 
 Palettes are generated, not chosen. A hash of the business name picks a hue from
@@ -241,7 +264,7 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 110 tests
+npm test          # 116 tests
 npm run typecheck
 npm run build
 ```
@@ -253,6 +276,12 @@ the audit, which is written entirely from the model's point of view. Every case
 there is the natural, plausible, *wrong* thing: it invents a rating, invents a
 phone number, reaches for Unsplash, drops the map token, returns a fenced code
 block, returns a fragment with no `<body>` to inject into.
+
+Checking the motion needs a running server: headless Chrome screenshots the top
+of a document and a `#fragment` capture comes back blank, so
+`/_scrub.html?slug=<slug>&y=2600` loads a site into a same-origin iframe and
+scrolls it there. That harness is the only thing in this repository with
+JavaScript in it.
 
 The design loop itself runs against a local stand-in for the API, because the
 parts most likely to break — stitching the prefill back on, *rewriting* a
