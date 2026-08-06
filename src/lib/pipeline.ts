@@ -2,7 +2,7 @@ import { recordSite, upsertProspects, writeSite } from "./db";
 import { discover } from "./overpass";
 import { renderSite } from "./render";
 import { rank, type Scored } from "./score";
-import { buildSpec } from "./spec";
+import { buildSpec, collectAssets } from "./spec";
 
 /**
  * Discover → score → spec → build, with no approval gate.
@@ -82,6 +82,9 @@ export async function* run(opts: RunOptions): AsyncGenerator<PipelineEvent> {
     };
 
     try {
+      // Imagery is fetched per site. The category pool is cached across the run,
+      // so this is one map fetch each after the first site of a category.
+      spec.assets = await collectAssets(spec);
       const html = renderSite(spec);
       const bytes = writeSite(spec.slug, html);
       recordSite(spec, bytes);

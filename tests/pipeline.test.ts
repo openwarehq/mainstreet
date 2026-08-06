@@ -166,10 +166,9 @@ describe("renderSite", () => {
   const spec = buildSpec(scoreProspect(prospect({ phone: "+61 2 9516 3341" })));
   const html = renderSite(spec);
 
-  it("is one self-contained file with no external requests", () => {
+  it("ships no script and no external stylesheet", () => {
     expect(html).not.toMatch(/<script/i);
     expect(html).not.toMatch(/<link[^>]+href="http/i);
-    expect(html).not.toMatch(/src="http/i);
   });
 
   it("renders the real hours it was given", () => {
@@ -240,5 +239,88 @@ describe("the captured fixture", () => {
       const html = renderSite(buildSpec(scoreProspect(p)));
       expect(html).toContain("<!doctype html>");
     }
+  });
+});
+
+
+describe("a site with imagery attached", () => {
+  // buildSpec is pure, so the earlier suite only ever renders the no-assets
+  // path. These cover what a real generated site actually contains.
+  const base = buildSpec(scoreProspect(prospect()));
+  const withAssets = {
+    ...base,
+    assets: {
+      photos: [
+        {
+          url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/b/X.jpg/1000px-X.jpg",
+          width: 1000,
+          height: 700,
+          artist: "A Photographer",
+          licence: "CC BY-SA 4.0",
+          page: "https://commons.wikimedia.org/wiki/File:X.jpg",
+        },
+        {
+          url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/d/Y.jpg/1000px-Y.jpg",
+          width: 1000,
+          height: 700,
+          artist: "B Photographer",
+          licence: "CC BY 2.0",
+          page: "https://commons.wikimedia.org/wiki/File:Y.jpg",
+        },
+        {
+          url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/f/Z.jpg/1000px-Z.jpg",
+          width: 1000,
+          height: 700,
+          artist: "C Photographer",
+          licence: "CC0",
+          page: "https://commons.wikimedia.org/wiki/File:Z.jpg",
+        },
+      ],
+      map: {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/png;base64,AAAA"/></svg>',
+        attribution: "© OpenStreetMap contributors",
+      },
+    },
+  };
+  const out = renderSite(withAssets);
+
+  it("uses the first photograph as the hero", () => {
+    expect(out).toContain("hero-photo");
+    expect(out).toContain("1000px-X.jpg");
+  });
+
+  it("embeds the map rather than linking OpenStreetMap's tile servers", () => {
+    // Linking tiles would mean every visitor to every generated site pulls from
+    // donated infrastructure, which their usage policy asks you not to do.
+    expect(out).toContain("data:image/png;base64");
+    expect(out).not.toContain("tile.openstreetmap.org");
+  });
+
+  it("credits every photographer and licence, which CC-BY requires", () => {
+    for (const name of ["A Photographer", "B Photographer", "C Photographer"]) {
+      expect(out).toContain(name);
+    }
+    expect(out).toContain("CC BY-SA 4.0");
+    expect(out).toContain("Wikimedia Commons");
+  });
+
+  it("still ships no JavaScript", () => {
+    expect(out).not.toMatch(/<script/i);
+  });
+
+  it("lazy-loads the gallery but not the hero", () => {
+    expect(out).toMatch(/fetchpriority="high"/);
+    expect(out).toMatch(/loading="lazy"/);
+  });
+
+  it("renders the map even when no street address is mapped", () => {
+    // The businesses with no address are the ones a map helps most; an earlier
+    // version coupled the two and silently dropped the map for all of them.
+    const noAddr = buildSpec(
+      scoreProspect(prospect({ street: null, housenumber: null, city: null, postcode: null })),
+    );
+    const html2 = renderSite({ ...noAddr, assets: withAssets.assets });
+    expect(html2).toContain("mapcard");
+    expect(html2).toContain("data:image/png;base64");
   });
 });

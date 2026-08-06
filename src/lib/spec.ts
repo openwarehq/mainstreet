@@ -1,5 +1,7 @@
 import { parseHours, summarise, type Schedule } from "./hours";
+import { imagePool, pickPhotos, type Photo } from "./images";
 import type { Scored } from "./score";
+import { staticMap } from "./staticmap";
 
 /**
  * Turns a prospect into a site specification.
@@ -42,6 +44,18 @@ export type Palette = {
   mood: "warm" | "elegant" | "bold" | "clean" | "modern";
 };
 
+/**
+ * Imagery, fetched separately from the spec.
+ *
+ * `buildSpec` stays pure and synchronous so it can be tested without a network,
+ * and everything that needs one lives here and is attached afterwards. A site
+ * with no assets still renders — it falls back to generated artwork.
+ */
+export type SiteAssets = {
+  photos: Photo[];
+  map: { svg: string; attribution: string } | null;
+};
+
 export type SiteSpec = {
   prospectId: string;
   slug: string;
@@ -49,12 +63,17 @@ export type SiteSpec = {
   category: string;
   categoryLabel: string;
   locality: string | null;
+  /** The business's own coordinates. The map needs these whether or not an
+   *  address happens to be mapped. */
+  lat: number;
+  lon: number;
   palette: Palette;
   sections: Section[];
   draft: boolean;
   /** ODbL requires attribution wherever the data is shown. */
   attribution: string;
   generatedAt: number;
+  assets?: SiteAssets;
 };
 
 // ── categories ──────────────────────────────────────────────────────────────
@@ -288,6 +307,8 @@ export function buildSpec(p: Scored): SiteSpec {
     category: p.kind,
     categoryLabel: label,
     locality,
+    lat: p.lat,
+    lon: p.lon,
     palette,
     sections,
     draft: true,
@@ -304,6 +325,26 @@ export function buildSpec(p: Scored): SiteSpec {
  * into `https://facebook.com/javascript:alert(1)` — harmless, because it is an
  * https URL, but a link to nowhere on a page being pitched to a business.
  */
+/**
+ * Fetches the photography and the map for one site.
+ *
+ * The map is the image that matters. Category photography says "a café"; a map
+ * of their corner says "*this* café" — it is the only picture on the page that
+ * is specifically theirs, and it is what stops a batch of generated sites
+ * looking like a batch of generated sites.
+ */
+export async function collectAssets(spec: SiteSpec): Promise<SiteAssets> {
+  const family = familyOf(spec.category);
+  const [pool, map] = await Promise.all([
+    imagePool(family),
+    staticMap(spec.lat, spec.lon, { zoom: 16, cols: 4, rows: 2, accent: spec.palette.accent }),
+  ]);
+  return {
+    photos: pickPhotos(pool, spec.business, 3),
+    map: map ? { svg: map.svg, attribution: map.attribution } : null,
+  };
+}
+
 function normaliseSocial(value: string, host: string): string | null {
   const v = value.trim();
   if (/^https?:\/\//i.test(v)) return v;

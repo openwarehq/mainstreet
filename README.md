@@ -47,15 +47,44 @@ was filtered. Every card shows its reasons, so the ranking is auditable.
 
 ## What it builds
 
-One self-contained HTML file per business. Inline CSS, no framework, no build
-step, no external requests. A local business site does not need 200KB of
-JavaScript to show an address and a phone number — and one file is something you
-can hand over, host anywhere, or attach to an email.
+One HTML file per business. Inline CSS, no framework, no build step, **no
+JavaScript at all.** Seven category palettes (food, beauty, trades, health,
+professional, fitness, retail) with matching type, so a plumber and a day spa do
+not get the same page.
 
-Seven category palettes (food, beauty, trades, health, professional, fitness,
-retail) with matching type, so a plumber and a day spa do not get the same page.
-Hero artwork is generated SVG seeded from the business name, so every site is
-distinct and re-running never changes an existing one.
+### The map is the point
+
+Every site carries a real map of the business's own corner, built from
+OpenStreetMap tiles and **embedded** in the page as data URIs. It is the only
+image on the page that is specifically theirs, and it is what stops a batch of
+generated sites looking like a batch of generated sites.
+
+It is embedded rather than linked because OSM's tile servers are donated
+infrastructure whose usage policy discourages automated bulk use — linking would
+mean every visitor to every generated site pulling from them forever. Tiles are
+cached across a run, so a whole high street costs about a dozen fetches.
+
+### Photography
+
+Category imagery from Wikimedia Commons: CC-licensed, no API key, and shipping
+machine-readable attribution — which matters, because CC-BY requires a credit
+line and a generator that cannot produce one cannot legally use the image. Every
+photograph is credited to its photographer with its licence in the footer.
+
+These are **not photographs of the business** — nobody has those. They are what a
+café counter or a salon floor looks like, the same thing a designer drops into a
+pitch deck, and the draft banner says the details are unconfirmed. A pool of
+sixty-odd images per category is fetched once and picked from by a hash of the
+business name, so two cafés on the same street get different photographs and any
+one café keeps its own every time it is regenerated.
+
+Unlike the map, photographs are **linked** to Wikimedia's CDN, which is built to
+be linked and explicitly permits it. Inlining three would put a megabyte in every
+file for no benefit. Page weight is roughly 300–400KB of imagery above the fold,
+with the gallery lazy-loaded.
+
+If Commons returns nothing usable for a category, the hero falls back to
+generated SVG artwork seeded from the business name and the page still builds.
 
 ---
 
@@ -120,7 +149,7 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 45 tests
+npm test          # 51 tests
 npm run typecheck
 npm run build
 ```
@@ -138,6 +167,9 @@ emits an executable link.
 - **It does not publish.** Sites are written to `./sites` and previewed locally.
   Nothing goes near a real domain, and nothing claims to be the business's
   official site.
+- **It is not offline once built.** The map is embedded, but photographs load
+  from Wikimedia. Strip the `assets.photos` if you need a page that renders with
+  no network at all.
 - **It cannot see anything OSM does not have.** Coverage varies enormously by
   country and suburb. A thin result usually means thin mapping, not no
   businesses.
