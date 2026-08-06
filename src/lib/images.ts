@@ -22,6 +22,8 @@ export type Photo = {
   artist: string;
   licence: string;
   page: string;
+  /** Higher is better: Commons peer review, then how recent it is. */
+  rank: number;
 };
 
 const AGENT = "mainstreet/1.0 (local business site generator)";
@@ -40,12 +42,14 @@ const AGENT = "mainstreet/1.0 (local business site generator)";
  */
 const QUERIES: Record<string, string[]> = {
   food: ["cafe interior", "restaurant interior"],
-  beauty: ["hair salon", "barbershop interior"],
-  trades: ["workshop tools", "carpenter workshop"],
+  beauty: ["hair salon", "beauty salon"],
+  trades: ["carpentry workshop", "auto repair"],
   health: ["dental clinic", "medical clinic"],
-  professional: ["office interior", "meeting room"],
+  // "office interior" returns post offices and state buildings almost to the
+  // exclusion of anything a small practice would recognise.
+  professional: ["coworking space", "conference room"],
   fitness: ["gym interior", "gym equipment"],
-  retail: ["shop interior", "boutique interior"],
+  retail: ["boutique interior", "clothing store"],
 };
 
 /**
@@ -57,6 +61,35 @@ const QUERIES: Record<string, string[]> = {
  */
 const REJECT =
   /\b(1[6-9]\d\d|19[0-5]\d)\b|\b(MET DP|museum|painting|drawing|engraving|lithograph|etching|poster|advertisement|announcement|catalogue?|prospectus|archive|navy|army|coat of arms|logo|diagram|blueprint|patent|manuscript|postcard|stamp|banknote)\b/i;
+
+/**
+ * Categories that mean the photograph is a historical document.
+ *
+ * The title filter alone was not enough, and the way that showed up was a
+ * generated café opening on a **black-and-white photograph of a 1970s Hungarian
+ * dining room** — filename `Restaurant, interior Fortepan 17198.jpg`, which
+ * carries no year and reads as a perfectly ordinary result. Commons' own
+ * category strings say what the filename does not.
+ */
+const REJECT_CATEGORY =
+  /\b(fortepan|black[- ]and[- ]white|monochrome|paintings?|drawings?|engravings?|lithographs?|postcards?|pd-old|public domain|historical|19\d\d in|18\d\d)\b/i;
+
+/**
+ * The year the photograph was taken, from Exif where Commons has it.
+ *
+ * This is the strongest quality signal available without looking at pixels: a
+ * "café interior" from 1958 is a fine photograph and the wrong one to open a
+ * pitch with. `circa 1879` and similar prose forms parse to their year and are
+ * rejected on the same rule.
+ */
+function shotYear(value: string | undefined): number | null {
+  if (!value) return null;
+  const m = stripTags(value).match(/\b(1[6-9]\d\d|20\d\d)\b/);
+  return m ? Number(m[1]) : null;
+}
+
+/** The earliest a photograph can be and still look like a working business. */
+const OLDEST = 2008;
 
 /** Commons search returns a page per file; this is the shape we use. */
 type CommonsPage = {
@@ -91,7 +124,7 @@ export function clearImageCache(): void {
 async function searchCommons(term: string): Promise<CommonsPage[]> {
   const url =
     "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
-    "&generator=search&gsrnamespace=6&gsrlimit=50" +
+    "&generator=search&gsrnamespace=6&gsrlimit=100" +
     `&gsrsearch=${encodeURIComponent(`filetype:bitmap ${term}`)}` +
     // The width is requested here rather than rewritten in the URL afterwards.
     // Commons only serves thumbnail sizes it has actually generated: asking for
@@ -141,8 +174,22 @@ async function fetchPool(family: string): Promise<Photo[]> {
     if (ratio < 1.1 || ratio > 2.6) continue;
 
     const em = ii.extmetadata ?? {};
+    const categories = stripTags(em.Categories?.value ?? "");
+    if (REJECT_CATEGORY.test(categories)) continue;
+
+    // No date at all is allowed through — plenty of good modern uploads have
+    // stripped Exif — but a date that *is* there and is old is disqualifying.
+    const year = shotYear(em.DateTimeOriginal?.value) ?? shotYear(em.DateTime?.value);
+    if (year !== null && year < OLDEST) continue;
+
     const artist = stripTags(em.Artist?.value ?? "").slice(0, 60) || "Unknown";
     const licence = stripTags(em.LicenseShortName?.value ?? "") || "see Commons";
+
+    // Commons runs its own peer review. "Quality images" and "Featured
+    // pictures" are the categories that survive it, and they are by a wide
+    // margin the best-looking things a keyless search can reach.
+    const reviewed = /\b(quality images|featured pictures|valued images)\b/i.test(categories);
+    const rank = (reviewed ? 4 : 0) + (year && year >= 2015 ? 2 : year ? 1 : 0);
 
     out.push({
       url: ii.thumburl,
@@ -151,9 +198,13 @@ async function fetchPool(family: string): Promise<Photo[]> {
       artist,
       licence,
       page: ii.descriptionurl ?? `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(title)}`,
+      rank,
     });
   }
-  return out;
+
+  // Best first, so `pickPhotos` is choosing between good photographs rather
+  // than across the whole spread of what a plain search returns.
+  return out.sort((a, b) => b.rank - a.rank);
 }
 
 export function imagePool(family: string): Promise<Photo[]> {

@@ -90,8 +90,10 @@ function heroArt(spec: SiteSpec): string {
 function css(p: Palette): string {
   return `
 :root{
-  --bg:${p.bg}; --surface:${p.surface}; --ink:${p.ink}; --muted:${p.muted};
-  --accent:${p.accent}; --accent-ink:${p.accentInk}; --line:${p.line};
+  --bg:${p.bg}; --surface:${p.surface}; --raised:${p.raised};
+  --ink:${p.ink}; --muted:${p.muted};
+  --accent:${p.accent}; --accent-ink:${p.accentInk}; --accent-2:${p.accent2};
+  --line:${p.line}; --r:${p.radius}px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -131,13 +133,18 @@ header.nav{
 .hero .art{position:absolute;inset:0}
 .hero .art svg,.hero .art img{width:100%;height:100%;display:block;object-fit:cover}
 .hero .scrim{position:absolute;inset:0}
-/* A photograph needs a heavier scrim than generated art or the headline sits on
-   whatever happens to be behind it. Two layers: a vertical wash for legibility
-   at the bottom, and a horizontal one so the left column always has ground. */
+/* A photograph needs ground under the headline, and the naive way to get it —
+   washing the whole image in the page colour — is what made the light schemes
+   look like a faded photocopy. Instead the page colour is opaque behind the
+   text column and gone by two thirds across, so the type sits on solid ground
+   and the photograph is still a photograph.
+
+   Light pages need it stronger: dark text on a bright photo fails much sooner
+   than light text on a dark one. */
 .hero-photo .scrim{
   background:
-    linear-gradient(to top, var(--bg) 2%, color-mix(in srgb,var(--bg) 55%,transparent) 46%, color-mix(in srgb,var(--bg) 18%,transparent) 100%),
-    linear-gradient(to right, color-mix(in srgb,var(--bg) 82%,transparent), transparent 62%);
+    linear-gradient(to top, var(--bg) 1%, color-mix(in srgb,var(--bg) ${p.dark ? 40 : 55}%,transparent) 38%, transparent 92%),
+    linear-gradient(to right, var(--bg) ${p.dark ? 12 : 22}%, color-mix(in srgb,var(--bg) ${p.dark ? 55 : 70}%,transparent) ${p.dark ? 42 : 50}%, transparent ${p.dark ? 72 : 80}%);
 }
 .hero .inner{position:relative;padding:150px 0 110px}
 .hero-photo h1{text-shadow:0 2px 30px color-mix(in srgb,var(--bg) 70%,transparent)}
@@ -148,7 +155,7 @@ header.nav{
 .hero p.sub{color:var(--muted);font-size:20px;max-width:44ch;margin-top:18px}
 .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
 .btn{
-  display:inline-block;padding:14px 26px;border-radius:6px;text-decoration:none;
+  display:inline-block;padding:14px 26px;border-radius:var(--r);text-decoration:none;
   font-weight:600;font-size:15.5px;
 }
 .btn-primary{background:var(--accent);color:var(--accent-ink)}
@@ -160,7 +167,7 @@ section{padding:76px 0;border-bottom:1px solid var(--line)}
 section:last-of-type{border-bottom:0}
 .lede{color:var(--muted);font-size:19px;max-width:60ch;margin-top:18px}
 .grid{display:grid;gap:22px;margin-top:40px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px}
 .card h3{margin-bottom:8px}
 .card p{color:var(--muted);font-size:15.5px;margin:0}
 .note{
@@ -169,7 +176,7 @@ section:last-of-type{border-bottom:0}
 }
 
 /* hours */
-.hours{margin-top:34px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.hours{margin-top:34px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .hours .row{display:flex;justify-content:space-between;gap:16px;padding:13px 20px;border-bottom:1px solid var(--line);font-size:15.5px}
 .hours .row:last-child{border-bottom:0}
 .hours .row.closed{color:var(--muted)}
@@ -181,7 +188,7 @@ section:last-of-type{border-bottom:0}
 .split{display:grid;gap:28px;margin-top:36px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 address{font-style:normal;font-size:17px;line-height:1.9}
 .pin{
-  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   padding:26px;display:flex;align-items:center;gap:16px;
 }
 .pin svg{flex:0 0 auto}
@@ -191,25 +198,25 @@ address{font-style:normal;font-size:17px;line-height:1.9}
 .contact-list a{text-decoration:none;color:var(--accent);font-weight:600}
 .social{display:flex;gap:12px;margin-top:18px}
 .social a{
-  border:1px solid var(--line);border-radius:6px;padding:9px 16px;
+  border:1px solid var(--line);border-radius:var(--r);padding:9px 16px;
   text-decoration:none;font-size:14.5px;color:var(--muted);
 }
 .social a:hover{color:var(--ink);border-color:var(--accent)}
 
 /* gallery */
 .gallery{display:grid;gap:18px;margin-top:36px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.gallery figure{margin:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.gallery figure{margin:0;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--surface)}
 .gallery img{display:block;width:100%;height:290px;object-fit:cover;transition:transform .5s ease}
 .gallery figure:hover img{transform:scale(1.03)}
 
 /* map */
 .mapsection{padding-top:0;border-bottom:1px solid var(--line)}
-.mapframe{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.mapframe{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--surface)}
 .mapframe svg{display:block;width:100%;height:auto}
 .mapcard{
   position:absolute;left:22px;bottom:22px;max-width:300px;
   background:color-mix(in srgb,var(--bg) 92%,transparent);
-  border:1px solid var(--line);border-radius:10px;padding:18px 20px;
+  border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;
   display:flex;flex-direction:column;gap:8px;
   backdrop-filter:blur(8px);font-size:15px;
 }
@@ -229,7 +236,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
   section{padding:56px 0}
   .gallery img{height:220px}
   .mapcard{position:static;max-width:none;border:0;border-top:1px solid var(--line);border-radius:0;backdrop-filter:none}
-  .mapframe{border-radius:12px}
+  .mapframe{border-radius:var(--r)}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 `.trim();

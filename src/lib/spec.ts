@@ -1,7 +1,10 @@
 import { parseHours, summarise, type Schedule } from "./hours";
 import { imagePool, pickPhotos, type Photo } from "./images";
+import { paletteFor, type Palette } from "./palette";
 import type { Scored } from "./score";
 import { staticMap } from "./staticmap";
+
+export type { Palette } from "./palette";
 
 /**
  * Turns a prospect into a site specification.
@@ -29,19 +32,31 @@ export type Section =
   | { kind: "location"; heading: string; address: string[]; lat: number; lon: number }
   | { kind: "contact"; heading: string; phone: string | null; email: string | null; social: Array<{ label: string; href: string }> };
 
-export type Palette = {
-  id: string;
-  bg: string;
-  surface: string;
-  ink: string;
-  muted: string;
-  accent: string;
-  accentInk: string;
-  line: string;
-  display: string;
-  body: string;
-  /** Hero treatment, which changes the whole feel more than colour does. */
-  mood: "warm" | "elegant" | "bold" | "clean" | "modern";
+/**
+ * The verified facts, collected in one place.
+ *
+ * This is the *only* thing handed to a design model, and the auditor checks the
+ * finished page against it. Keeping it separate from the rendered sections is
+ * what makes "nothing on the page is invented" checkable rather than a promise:
+ * if a phone number appears in the HTML and is not in here, the page is
+ * rejected.
+ */
+export type Facts = {
+  name: string;
+  categoryLabel: string;
+  locality: string | null;
+  street: string | null;
+  address: string[];
+  phone: string | null;
+  email: string | null;
+  /** Day-by-day lines, already formatted, or null if OSM had nothing usable. */
+  hours: string[] | null;
+  /** Hours OSM had but the parser would not guess at — shown verbatim. */
+  hoursRaw: string | null;
+  cuisine: string | null;
+  social: Array<{ label: string; href: string }>;
+  lat: number;
+  lon: number;
 };
 
 /**
@@ -69,11 +84,21 @@ export type SiteSpec = {
   lon: number;
   palette: Palette;
   sections: Section[];
+  facts: Facts;
   draft: boolean;
   /** ODbL requires attribution wherever the data is shown. */
   attribution: string;
   generatedAt: number;
   assets?: SiteAssets;
+  /** Who laid the page out, and what it cost. Set by the pipeline. */
+  design?: {
+    by: "claude" | "template";
+    /** The art direction Claude was briefed with, or the palette id. */
+    direction: string;
+    model: string | null;
+    usd: number;
+    priced: boolean;
+  };
 };
 
 // ── categories ──────────────────────────────────────────────────────────────
@@ -94,65 +119,6 @@ export function familyOf(kind: string): string {
   }
   return "retail";
 }
-
-const PALETTES: Record<string, Palette> = {
-  food: {
-    id: "food",
-    bg: "#12100d", surface: "#1b1814", ink: "#f6f1e8", muted: "#a89a86",
-    accent: "#e8a33d", accentInk: "#1a1510", line: "#2b2620",
-    display: "'Georgia', 'Times New Roman', serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "warm",
-  },
-  beauty: {
-    id: "beauty",
-    bg: "#fbf7f7", surface: "#ffffff", ink: "#2a1f26", muted: "#7d6a75",
-    accent: "#9d4f6c", accentInk: "#ffffff", line: "#ece0e4",
-    display: "'Georgia', 'Times New Roman', serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "elegant",
-  },
-  trades: {
-    id: "trades",
-    bg: "#0f1621", surface: "#16202e", ink: "#eef3f9", muted: "#8fa2b8",
-    accent: "#ff8a1f", accentInk: "#12100d", line: "#22303f",
-    display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "bold",
-  },
-  health: {
-    id: "health",
-    bg: "#f7fbfb", surface: "#ffffff", ink: "#12262b", muted: "#5d7a80",
-    accent: "#0f8f9e", accentInk: "#ffffff", line: "#dceaec",
-    display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "clean",
-  },
-  professional: {
-    id: "professional",
-    bg: "#0e1420", surface: "#151d2b", ink: "#eaf0f7", muted: "#93a3ba",
-    accent: "#c9a227", accentInk: "#12100d", line: "#1f2a3a",
-    display: "'Georgia', 'Times New Roman', serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "elegant",
-  },
-  fitness: {
-    id: "fitness",
-    bg: "#0b0d0c", surface: "#141816", ink: "#f2f7f3", muted: "#8b9a90",
-    accent: "#b6f04a", accentInk: "#0b0d0c", line: "#1f2723",
-    display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "bold",
-  },
-  retail: {
-    id: "retail",
-    bg: "#faf9f7", surface: "#ffffff", ink: "#1d1c1a", muted: "#6f6a63",
-    accent: "#2f6f5e", accentInk: "#ffffff", line: "#e7e4df",
-    display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    mood: "modern",
-  },
-};
 
 const LABELS: Record<string, string> = {
   cafe: "Café", restaurant: "Restaurant", fast_food: "Takeaway", bar: "Bar", pub: "Pub",
@@ -236,7 +202,9 @@ function addressLines(p: Scored): string[] {
 
 export function buildSpec(p: Scored): SiteSpec {
   const family = familyOf(p.kind);
-  const palette = PALETTES[family];
+  // Seeded on the name, not the category, so two cafés on the same street come
+  // out looking like two different businesses.
+  const palette = paletteFor(family, p.name);
   const label = LABELS[p.kind] ?? p.kind.replace(/_/g, " ");
   const locality = p.city ?? null;
   const schedule = parseHours(p.openingHours);
@@ -300,6 +268,24 @@ export function buildSpec(p: Scored): SiteSpec {
     social,
   });
 
+  const facts: Facts = {
+    name: p.name,
+    categoryLabel: label,
+    locality,
+    street: p.street,
+    address,
+    phone: p.phone,
+    email: p.email,
+    hours: schedule && !schedule.unparsed
+      ? schedule.days.map((d) => `${d.label}: ${d.ranges.length ? d.ranges.join(", ") : "Closed"}`)
+      : null,
+    hoursRaw: schedule?.unparsed ? schedule.raw : null,
+    cuisine: p.cuisine,
+    social,
+    lat: p.lat,
+    lon: p.lon,
+  };
+
   return {
     prospectId: p.id,
     slug: slugify(p.name, p.id),
@@ -311,6 +297,7 @@ export function buildSpec(p: Scored): SiteSpec {
     lon: p.lon,
     palette,
     sections,
+    facts,
     draft: true,
     attribution: "Business details from OpenStreetMap contributors, ODbL.",
     generatedAt: Date.now(),

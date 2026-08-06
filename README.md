@@ -1,11 +1,12 @@
 # mainstreet
 
 **An automated web agency. It finds local businesses with no website and builds
-them one — discovery, spec and build with nothing to approve.**
+them one — discovery, spec, design and build with nothing to approve.**
 
 ```bash
 npm install
-npm run dev            # http://localhost:4340
+echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local   # optional; see "Who designs the page"
+npm run dev                                         # http://localhost:4340
 ```
 
 Type a suburb. Press **Run agency**. It queries OpenStreetMap, ranks every
@@ -48,9 +49,51 @@ was filtered. Every card shows its reasons, so the ranking is auditable.
 ## What it builds
 
 One HTML file per business. Inline CSS, no framework, no build step, **no
-JavaScript at all.** Seven category palettes (food, beauty, trades, health,
-professional, fitness, retail) with matching type, so a plumber and a day spa do
-not get the same page.
+JavaScript at all.**
+
+### Who designs the page
+
+**Claude**, when `ANTHROPIC_API_KEY` is set. It is handed the verified facts, a
+generated palette, a named art direction and the imagery, and writes the whole
+document — layout included.
+
+That last part is the reason it exists. The built-in renderer produces a
+competent site, and after eight of them you can see the template through it:
+same rhythm, same section order, same hero. Palette variation does not fix that,
+because the thing that repeats is the *layout*.
+
+Without a key the built-in renderer builds every site instead, and the dashboard
+says which one is running. Nothing else changes — same facts, same map, same
+credits, same draft banner.
+
+| variable | effect |
+|:--|:--|
+| `ANTHROPIC_API_KEY` | unset → the built-in renderer |
+| `MAINSTREET_MODEL` | default `claude-sonnet-5` |
+| `MAINSTREET_DESIGN=off` | keep the key, use the renderer |
+
+```bash
+npm run design:one -- "Alba Coffee" cafe   # one site, to check the key works
+```
+
+Three sites are designed at once. Each run reports tokens and cost per site; a
+model that is not in the price table is reported as **unpriced** rather than
+free, because silently showing $0 for work that cost money is the one accounting
+failure that matters.
+
+### Twelve businesses, twelve palettes
+
+Palettes are generated, not chosen. A hash of the business name picks a hue from
+a pool the category can plausibly wear, one of seven schemes (how light the page
+is and where the colour sits), a type pairing and a corner radius — so two cafés
+on the same street get visibly different sites, and the same café gets the same
+site every time it is regenerated.
+
+The constraint is the useful half. Unconstrained generation gives a dental
+practice a blood-red duotone and the page stops being something you could send
+to the owner. Contrast is computed rather than eyeballed, so no combination can
+come out unreadable — there is a test that walks every family against a dozen
+names and checks all of it.
 
 ### The map is the point
 
@@ -78,6 +121,14 @@ sixty-odd images per category is fetched once and picked from by a hash of the
 business name, so two cafés on the same street get different photographs and any
 one café keeps its own every time it is regenerated.
 
+Commons is full of scans, and a plain search will hand you one: the first build
+opened a café on a **black-and-white photograph of a 1970s Hungarian dining
+room** — a perfectly ordinary-looking result with no year in its filename. Three
+filters fix it. Commons' own category strings catch what filenames do not,
+Exif dates rule out anything before 2008, and images that have passed Commons'
+peer review (*Quality images*, *Featured pictures*) sort to the front, which is
+by a wide margin the best quality signal a keyless search can reach.
+
 Unlike the map, photographs are **linked** to Wikimedia's CDN, which is built to
 be linked and explicitly permits it. Inlining three would put a megabyte in every
 file for no benefit. Page weight is roughly 300–400KB of imagery above the fold,
@@ -97,6 +148,37 @@ hours, phone. There are no reviews, no testimonials, no "serving the community
 since 1998", no stock photographs of premises nobody has seen, and no awards.
 Those are the things that would make one of these a lie rather than a proposal,
 and they are also the first things an owner notices are wrong.
+
+### Which is why the model's page is audited
+
+Letting a model design the site is what stops every business getting the same
+layout. It is also the moment this could start lying: the most natural thing for
+a model handed *"Alba Coffee, a café on King Street"* to write is *"Newtown's
+finest coffee since 1998 — ★★★★★ from over 500 happy customers"*, and every word
+of that is invented about a business nobody has contacted.
+
+So every finished page is checked against the facts before it is saved:
+
+- **Invention** — ratings, reviews, trading history, years of experience,
+  awards, customer counts, prices, guarantees, free offers, credentials,
+  "family-run", claims about a team. And any phone number or email address that
+  is not the one on record, which is the dangerous one: a hallucinated phone
+  number on a real business's page sends their customers to a stranger.
+- **Unsafe** — script, event handlers, `javascript:` links, iframes, external
+  stylesheets, `@import`, and any URL pointing somewhere that was not supplied.
+  A model asked for photographs will reach for Unsplash unprompted, which is a
+  hotlink to a service that never agreed to serve it.
+
+A failing page is **not patched into compliance** — deleting the sentence
+containing "★★★★★" leaves a layout built around a rating that is no longer
+there. The violations go back to the model, which rewrites once; if it fails
+again the built-in renderer builds the site instead. A plainer site is a much
+better outcome than a handsome one carrying a phone number nobody can answer.
+
+Three things are injected by code rather than asked for in the prompt, because a
+promise that depends on a model following instructions is not a promise:
+`noindex, nofollow`, the draft banner, and the photographer and OpenStreetMap
+credits.
 
 What the generator supplies is structure and copy that is true by construction —
 "a bakery on King Street" — plus category-typical service headings that are a
@@ -134,6 +216,9 @@ the ranking still shows up in the tests.
 
 | variable | default |
 |:--|:--|
+| `ANTHROPIC_API_KEY` | unset — the built-in renderer designs the pages |
+| `MAINSTREET_MODEL` | `claude-sonnet-5` |
+| `MAINSTREET_DESIGN` | `off` forces the renderer even with a key |
 | `MAINSTREET_FIXTURE` | unset — live Overpass |
 | `MAINSTREET_DB` | `./mainstreet.db` |
 | `MAINSTREET_SITES` | `./sites` |
@@ -149,14 +234,18 @@ the run hangs on the first mirror and the fallback never happens.
 ## Development
 
 ```bash
-npm test          # 51 tests
+npm test          # 100 tests
 npm run typecheck
 npm run build
 ```
 
 The tests cover the parts where being wrong is invisible: the opening-hours
-grammar, the scoring, and that the renderer escapes what it is given and never
-emits an executable link.
+grammar, the scoring, that no generated palette can come out unreadable, that
+the renderer escapes what it is given and never emits an executable link — and
+the audit, which is written entirely from the model's point of view. Every case
+there is the natural, plausible, *wrong* thing: it invents a rating, invents a
+phone number, reaches for Unsplash, drops the map token, returns a fenced code
+block, returns a fragment with no `<body>` to inject into.
 
 ---
 

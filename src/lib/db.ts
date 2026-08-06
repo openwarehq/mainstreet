@@ -46,6 +46,18 @@ export function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS prospects_score ON prospects (score DESC);
     CREATE INDEX IF NOT EXISTS sites_built ON sites (built_at DESC);
   `);
+
+  // SQLite has no ADD COLUMN IF NOT EXISTS, and an existing database from
+  // before the designer landed is the normal case rather than the exception —
+  // the operator has already run the tool. Adding each column and ignoring the
+  // duplicate-column error is the whole migration.
+  for (const col of ["designer TEXT", "direction TEXT", "usd REAL"]) {
+    try {
+      db.exec(`ALTER TABLE sites ADD COLUMN ${col}`);
+    } catch {
+      /* already there */
+    }
+  }
   return db;
 }
 
@@ -97,10 +109,11 @@ export function listProspects(limit = 200): Scored[] {
 export function recordSite(spec: SiteSpec, bytes: number): void {
   getDb()
     .prepare(
-      `INSERT INTO sites (slug, prospect_id, business, category, spec, bytes, built_at)
-       VALUES (@slug, @prospect_id, @business, @category, @spec, @bytes, @built_at)
+      `INSERT INTO sites (slug, prospect_id, business, category, spec, bytes, built_at, designer, direction, usd)
+       VALUES (@slug, @prospect_id, @business, @category, @spec, @bytes, @built_at, @designer, @direction, @usd)
        ON CONFLICT(slug) DO UPDATE SET
-         spec=excluded.spec, bytes=excluded.bytes, built_at=excluded.built_at`,
+         spec=excluded.spec, bytes=excluded.bytes, built_at=excluded.built_at,
+         designer=excluded.designer, direction=excluded.direction, usd=excluded.usd`,
     )
     .run({
       slug: spec.slug,
@@ -110,6 +123,9 @@ export function recordSite(spec: SiteSpec, bytes: number): void {
       spec: JSON.stringify(spec),
       bytes,
       built_at: Date.now(),
+      designer: spec.design?.by ?? "template",
+      direction: spec.design?.direction ?? spec.palette.id,
+      usd: spec.design?.usd ?? 0,
     });
 }
 
@@ -120,12 +136,15 @@ export type SiteRow = {
   category: string;
   bytes: number;
   built_at: number;
+  designer: string | null;
+  direction: string | null;
+  usd: number | null;
 };
 
 export function listSites(limit = 100): SiteRow[] {
   return getDb()
     .prepare(
-      `SELECT slug, prospect_id, business, category, bytes, built_at
+      `SELECT slug, prospect_id, business, category, bytes, built_at, designer, direction, usd
        FROM sites ORDER BY built_at DESC LIMIT ?`,
     )
     .all(limit) as SiteRow[];
@@ -147,6 +166,8 @@ export function stats() {
     built: one(`SELECT COUNT(*) n FROM sites`),
     areas: one(`SELECT COUNT(DISTINCT area) n FROM prospects`),
     bytes: (d.prepare(`SELECT COALESCE(SUM(bytes),0) n FROM sites`).get() as { n: number }).n,
+    designed: one(`SELECT COUNT(*) n FROM sites WHERE designer = 'claude'`),
+    usd: (d.prepare(`SELECT COALESCE(SUM(usd),0) n FROM sites`).get() as { n: number }).n,
   };
 }
 

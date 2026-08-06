@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p ${PORT:-4340}",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "design:one": "tsx --env-file-if-exists=.env.local scripts/design-one.mts"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",
@@ -22,6 +23,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "tsx": "^4.23.9",
     "typescript": "^5",
     "vitest": "^3.2.6"
   }

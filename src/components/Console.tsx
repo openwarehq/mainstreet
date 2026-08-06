@@ -5,7 +5,15 @@ import type { PipelineEvent } from "@/lib/pipeline";
 import type { Scored } from "@/lib/score";
 import type { SiteRow } from "@/lib/db";
 
-type Stats = { prospects: number; withoutSite: number; built: number; areas: number; bytes: number };
+type Stats = {
+  prospects: number;
+  withoutSite: number;
+  built: number;
+  areas: number;
+  bytes: number;
+  designed: number;
+  usd: number;
+};
 type State = { stats: Stats; prospects: Scored[]; sites: SiteRow[]; now: number };
 
 /** The stages, in the order the pipeline emits them. */
@@ -13,7 +21,8 @@ const STAGES = [
   { id: "discovering", label: "Discover", note: "OpenStreetMap" },
   { id: "scored", label: "Score", note: "no website = lead" },
   { id: "spec", label: "Spec", note: "auto-approved" },
-  { id: "built", label: "Build", note: "one file each" },
+  { id: "designing", label: "Design", note: "Claude writes the page" },
+  { id: "built", label: "Build", note: "audited, then saved" },
 ] as const;
 
 type StageId = (typeof STAGES)[number]["id"];
@@ -38,6 +47,7 @@ export function Console() {
   const [stage, setStage] = useState<StageId | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [designer, setDesigner] = useState<Extract<PipelineEvent, { t: "designer" }> | null>(null);
   const abort = useRef<AbortController | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -115,9 +125,16 @@ export function Console() {
             continue;
           }
           setLog((l) => [...l, { e, at: Date.now() }]);
-          if (e.t === "discovering" || e.t === "scored" || e.t === "spec" || e.t === "built") {
+          if (
+            e.t === "discovering" ||
+            e.t === "scored" ||
+            e.t === "spec" ||
+            e.t === "designing" ||
+            e.t === "built"
+          ) {
             setStage(e.t as StageId);
           }
+          if (e.t === "designer") setDesigner(e);
           if (e.t === "built") void load();
           if (e.t === "failed") setError(e.message);
           if (e.t === "done") setStage(null);
@@ -193,14 +210,13 @@ export function Console() {
 
         <div className="flex shrink-0 items-center gap-5 border-l border-line pl-5">
           {[
-            ["prospects", s?.prospects ?? 0],
-            ["no site", s?.withoutSite ?? 0],
-            ["built", s?.built ?? 0],
+            ["prospects", (s?.prospects ?? 0).toLocaleString()],
+            ["no site", (s?.withoutSite ?? 0).toLocaleString()],
+            ["designed", (s?.designed ?? 0).toLocaleString()],
+            ["spend", s?.usd ? `$${s.usd.toFixed(2)}` : "$0.00"],
           ].map(([k, v]) => (
             <div key={String(k)}>
-              <div className="num text-[17px] leading-none font-semibold text-ink">
-                {(v as number).toLocaleString()}
-              </div>
+              <div className="num text-[17px] leading-none font-semibold text-ink">{v}</div>
               <div className="tag mt-1">{k}</div>
             </div>
           ))}
@@ -307,7 +323,10 @@ export function Console() {
             <span className="tag">pipeline</span>
             <span className="flex items-center gap-2">
               {running && <span className="pulse h-[5px] w-[5px] rounded-full bg-lime" />}
-              <span className="tag">{running ? "running" : "idle"} · no approval gate</span>
+                <span className="tag">
+                {running ? "running" : "idle"} · no approval gate
+                {designer ? ` · ${designer.mode === "claude" ? designer.model : "built-in renderer"}` : ""}
+              </span>
             </span>
           </div>
 
@@ -374,7 +393,16 @@ export function Console() {
               >
                 <div className="truncate text-[11.5px] text-ink">{site.business}</div>
                 <div className="tag mt-1 truncate">{site.category}</div>
-                <div className="num mt-1 flex gap-2 text-[9px] text-ink-3">
+                <div className="num mt-1 flex flex-wrap items-center gap-1.5 text-[9px] text-ink-3">
+                  <span
+                    className={`rounded px-1.5 py-[1px] text-[8.5px] ${
+                      site.designer === "claude"
+                        ? "bg-violet/15 text-violet"
+                        : "bg-bg-3 text-ink-3"
+                    }`}
+                  >
+                    {site.designer === "claude" ? site.direction ?? "claude" : "template"}
+                  </span>
                   <span>{Math.round(site.bytes / 1000)}KB</span>
                   <span>·</span>
                   <span>{ago(site.built_at, now)} ago</span>
@@ -452,6 +480,59 @@ function LogLine({ e, onPreview }: { e: PipelineEvent; onPreview: (slug: string)
           </span>
         </div>
       );
+    case "designer":
+      return (
+        <div className={`${base} mb-1`}>
+          <span className="tag w-[64px] shrink-0">design</span>
+          <span className="text-ink-2">
+            <span className={e.mode === "claude" ? "text-violet" : "text-ink-3"}>
+              {e.mode === "claude" ? e.model : "built-in renderer"}
+            </span>
+            <span className="text-ink-3"> — {e.note}</span>
+          </span>
+        </div>
+      );
+    case "designing":
+      return (
+        <div className={base}>
+          <span className="tag w-[64px] shrink-0">brief</span>
+          <span className="text-ink-2">
+            <span className="text-ink">{e.business}</span>
+            <span className="text-ink-3"> · </span>
+            <span className="num text-violet">{e.direction}</span>
+            <span className="num text-ink-3"> · {e.palette}</span>
+          </span>
+        </div>
+      );
+    case "designed":
+      return (
+        <div className={base}>
+          <span className="tag w-[64px] shrink-0">claude</span>
+          <span className="flex flex-wrap items-baseline gap-2 text-ink-2">
+            <span className="text-violet">✎</span>
+            <span className="text-ink">{e.business}</span>
+            <span className="num text-ink-3">
+              {(e.inputTokens / 1000).toFixed(1)}k in · {(e.outputTokens / 1000).toFixed(1)}k out ·{" "}
+              {e.priced ? `$${e.usd.toFixed(3)}` : "unpriced model"} ·{" "}
+              {(e.ms / 1000).toFixed(1)}s
+            </span>
+            {e.attempts > 1 && (
+              <span className="num rounded bg-amber/15 px-1.5 py-[1px] text-[8.5px] text-amber">
+                rewritten — {e.repaired.join(", ")}
+              </span>
+            )}
+          </span>
+        </div>
+      );
+    case "fellback":
+      return (
+        <div className={base}>
+          <span className="tag w-[64px] shrink-0">fall</span>
+          <span className="text-amber">
+            {e.business} — {e.why}. Built with the template instead.
+          </span>
+        </div>
+      );
     case "spec":
       return (
         <div className={base}>
@@ -475,7 +556,8 @@ function LogLine({ e, onPreview }: { e: PipelineEvent; onPreview: (slug: string)
               {e.business}
             </button>
             <span className="num text-ink-3">
-              {Math.round(e.bytes / 1000)}KB · {e.ms}ms
+              {Math.round(e.bytes / 1000)}KB · {(e.ms / 1000).toFixed(1)}s ·{" "}
+              <span className={e.by === "claude" ? "text-violet" : "text-ink-3"}>{e.by}</span>
             </span>
           </span>
         </div>
@@ -496,6 +578,13 @@ function LogLine({ e, onPreview }: { e: PipelineEvent; onPreview: (slug: string)
           <span className="text-ink-2">
             <span className="num text-lime">{e.built}</span> sites in{" "}
             <span className="num">{(e.ms / 1000).toFixed(1)}s</span>
+            {e.tokens > 0 && (
+              <span className="num text-ink-3">
+                {" "}
+                · {(e.tokens / 1000).toFixed(1)}k tokens ·{" "}
+                {e.priced ? `$${e.usd.toFixed(3)}` : `$${e.usd.toFixed(3)}+ (an unpriced model was used)`}
+              </span>
+            )}
           </span>
         </div>
       );

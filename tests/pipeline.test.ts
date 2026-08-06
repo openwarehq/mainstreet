@@ -156,9 +156,19 @@ describe("buildSpec", () => {
     expect(spec.sections.some((s) => s.kind === "hours")).toBe(false);
   });
 
-  it("picks a palette from the category family", () => {
-    expect(buildSpec(scoreProspect(prospect({ kind: "cafe" }))).palette.id).toBe("food");
-    expect(buildSpec(scoreProspect(prospect({ kind: "plumber", kindKey: "craft" }))).palette.id).toBe("trades");
+  it("collects the verified facts the designer is allowed to use", () => {
+    const spec = buildSpec(scoreProspect(prospect({ phone: "+61 2 9516 3341" })));
+    expect(spec.facts.phone).toBe("+61 2 9516 3341");
+    expect(spec.facts.name).toBe(spec.business);
+    expect(spec.facts.hours?.length).toBe(7);
+  });
+
+  it("hands over unparsed hours verbatim rather than a guess", () => {
+    const spec = buildSpec(
+      scoreProspect(prospect({ openingHours: "Mo-Fr 09:00-17:00 || by appointment" })),
+    );
+    expect(spec.facts.hours).toBeNull();
+    expect(spec.facts.hoursRaw).toBe("Mo-Fr 09:00-17:00 || by appointment");
   });
 });
 
@@ -258,6 +268,7 @@ describe("a site with imagery attached", () => {
           artist: "A Photographer",
           licence: "CC BY-SA 4.0",
           page: "https://commons.wikimedia.org/wiki/File:X.jpg",
+          rank: 0,
         },
         {
           url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/d/Y.jpg/1000px-Y.jpg",
@@ -266,6 +277,7 @@ describe("a site with imagery attached", () => {
           artist: "B Photographer",
           licence: "CC BY 2.0",
           page: "https://commons.wikimedia.org/wiki/File:Y.jpg",
+          rank: 0,
         },
         {
           url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/f/Z.jpg/1000px-Z.jpg",
@@ -274,6 +286,7 @@ describe("a site with imagery attached", () => {
           artist: "C Photographer",
           licence: "CC0",
           page: "https://commons.wikimedia.org/wiki/File:Z.jpg",
+          rank: 0,
         },
       ],
       map: {
