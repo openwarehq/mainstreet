@@ -36,6 +36,9 @@ export const MOTION_DOC = `Motion classes are available on every page — the st
 - class="m-wipe"       reveals as it scrolls into view — a clip-path wipe upward. Good on images and bands
 - class="m-stagger"    on a container: its direct children reveal one after another as it scrolls in
 - class="m-parallax"   on an image inside a position:relative, overflow:hidden box: drifts as you scroll
+- class="m-aurora"     on a decorative colour field: drifts and breathes, slowly, forever
+- class="m-float"      on a panel: rises and settles, slowly, forever. m-float-2 offsets a second one
+- class="m-hue"        on a colour field: its hue shifts as the page scrolls
 - class="m-grow"       on a rule or underline: draws itself out from the left as it scrolls in
 - class="m-lift"       hover: rises slightly. For cards and buttons
 - class="m-zoom"       on a figure wrapping an <img>: the image scales slowly on hover
@@ -59,6 +62,13 @@ export const MOTION_CSS = `
 @keyframes m-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes m-drift{from{transform:translate3d(0,-5%,0) scale(1.14)}to{transform:translate3d(0,5%,0) scale(1.14)}}
 @keyframes m-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes m-aurora{
+  0%{transform:translate3d(-3%,-2%,0) scale(1.15) rotate(0deg)}
+  50%{transform:translate3d(3%,2%,0) scale(1.22) rotate(4deg)}
+  100%{transform:translate3d(-3%,-2%,0) scale(1.15) rotate(0deg)}
+}
+@keyframes m-float{0%{transform:translateY(0)}50%{transform:translateY(-9px)}100%{transform:translateY(0)}}
+@keyframes m-hue{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(26deg)}}
 
 /* Hover and focus movement is safe everywhere: it is short, and it only
    happens because somebody asked for it. */
@@ -117,12 +127,23 @@ export const MOTION_CSS = `
       animation-range:cover 0% cover 100%;will-change:transform;
     }
 
+    /* The colour field shifts hue as the page scrolls. On a glass page this is
+       what makes it read as lit rather than painted — the light behind the
+       panels changes while the panels do not. */
+    .m-hue{animation:m-hue linear both;animation-timeline:scroll(root)}
+
     .m-grow{
       transform-origin:0 50%;
       animation:m-grow linear both;animation-timeline:view();
       animation-range:entry 10% cover 36%;
     }
   }
+
+  /* Ambient, unending, and therefore the two most likely to be unwelcome —
+     both are off entirely under reduced motion, like everything else here. */
+  .m-aurora{animation:m-aurora 34s ease-in-out infinite;will-change:transform}
+  .m-float{animation:m-float 7s ease-in-out infinite}
+  .m-float-2{animation-duration:9.5s;animation-delay:-2s}
 
   @supports (animation-timeline: scroll()){
     .m-bar{
@@ -137,7 +158,7 @@ export const MOTION_CSS = `
 /* Nothing moves for anybody who has asked for that. Not a soft version — none
    of it. The page still reads exactly the same. */
 @media (prefers-reduced-motion: reduce){
-  .m-in,.m-rise,.m-fade,.m-wipe,.m-grow,.m-parallax,.m-stagger > *,.m-mask .m-line{
+  .m-in,.m-rise,.m-fade,.m-wipe,.m-grow,.m-parallax,.m-aurora,.m-float,.m-hue,.m-stagger > *,.m-mask .m-line{
     animation:none !important;opacity:1 !important;transform:none !important;clip-path:none !important;
   }
   .m-lift,.m-zoom img,.m-line-in{transition:none !important}

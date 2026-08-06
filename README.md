@@ -23,7 +23,7 @@ forbid storing what comes back — and, the part that matters, **OSM records
 whether a business has a website.** A named business with a phone number and no
 `website` tag is exactly the lead this tool exists to find.
 
-On the captured Newtown fixture: **117 businesses, 85 with no site of their own.**
+On the captured Newtown fixture: **389 businesses, 268 with no site of their own.**
 
 Google Places needs a billed key and forbids storing most of its response; Yelp
 needs a key and rate-limits hard. Neither is usable for this.
@@ -75,6 +75,10 @@ credits, same draft banner.
 ```bash
 npm run design:one -- "Alba Coffee" cafe   # one site, to check the key works
 ```
+
+Twelve art directions, picked from a hash of the business name — `editorial`,
+`swiss`, `cinematic`, `brutalist`, `boutique`, `split`, `catalogue`, `marquee`,
+`quiet`, `collage`, `service`, `gallery` and `liquidglass`.
 
 Or design one yourself. `npm run brief -- "<business>"` prints the facts, the
 palette, the art direction and the imagery — the exact brief the model gets —
@@ -225,6 +229,28 @@ a business's own site is worse than printing none, because somebody drives there
 
 ---
 
+## Examples
+
+`examples/` holds seven finished pages, built for seven real Newtown businesses
+that have no website of their own. Open any of them in a browser — they are
+single files.
+
+Three of them are the `liquidglass` direction: frosted panels floating over a
+colour field built from the business's own palette, with the aurora drifting
+behind and everything revealing as it scrolls. **Luke Avenue** (a bakery, deep
+crimson), **Local Store Newtown** (a clothing shop, indigo, monospace, sticky
+glass sidebar) and **Gents Cuts Barbers** (a barber, teal, sharp 6px glass
+because that is the radius its palette asked for).
+
+The other four are `editorial`, `swiss` twice — the same brief on two palettes,
+which is the pair worth comparing — and `cinematic`.
+
+Note what happens where the record is thin. Luke Avenue has no street address,
+so the map is the only thing on the page that says where to go, and it says so.
+Gents Cuts Barbers has opening hours of `"Appointment only"`, reproduced
+verbatim and given its own panel rather than guessed at. Three of the seven have
+a **What is missing** block, which turns the hole in the data into the pitch.
+
 ## Running it offline
 
 Overpass is run by volunteers and goes down. During this build both mirrors
@@ -232,9 +258,10 @@ timed out for twenty minutes straight, which is a normal day for it.
 
 ```bash
 MAINSTREET_FIXTURE=./fixtures/newtown.json npm run dev
+npm run capture -- Newtown fixtures/newtown.json   # refresh it from a live run
 ```
 
-`fixtures/newtown.json` is real captured data — 117 Newtown businesses — so the
+`fixtures/newtown.json` is real captured data — 389 Newtown businesses — so the
 pipeline can be run, filmed and tested without depending on somebody else's free
 service being healthy. It deliberately stores no scores, so a change that breaks
 the ranking still shows up in the tests.

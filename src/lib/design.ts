@@ -134,6 +134,12 @@ const DIRECTIONS: Array<{ name: string; moods: string[]; brief: string }> = [
       "Built to be phoned. The number is the largest element on the page after the name, set as a huge tappable link in a full-width accent band directly under the hero, repeated in a sticky bottom bar on mobile. Everything else is short and scannable: what they do, where they are, when they are open. Practical, direct, no ornament.",
   },
   {
+    name: "liquidglass",
+    moods: ["modern", "bold", "elegant"],
+    brief:
+      "Glass over light. The page sits on a deep, saturated field built from three or four overlapping radial-gradients in the palette hues, with the hero photograph behind it at low opacity and heavily blurred — the background is atmosphere, not subject. Every panel is glass: `background: color-mix(in srgb, var(--ink) 8%, transparent)`, `backdrop-filter: blur(28px) saturate(180%)`, a 1px border of `color-mix(in srgb, var(--ink) 18%, transparent)`, a bright inset top edge (`inset 0 1px 0`) for the specular highlight, and a wide soft outer shadow so it floats. Radii of 24–32px everywhere, on everything. Type is white or near-white and light-weight over the glass, never dark. Photographs sit inside glass frames rather than bleeding to the edge. Add the m-aurora class to the background field and m-float to one or two panels. Layer generously — overlapping panels at different blur strengths is the whole effect.",
+  },
+  {
     name: "gallery",
     moods: ["warm", "elegant", "modern"],
     brief:

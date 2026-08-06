@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "design:one": "tsx --env-file-if-exists=.env.local scripts/design-one.mts",
     "brief": "tsx --env-file-if-exists=.env.local scripts/brief.mts",
-    "place": "tsx --env-file-if-exists=.env.local scripts/place.mts"
+    "place": "tsx --env-file-if-exists=.env.local scripts/place.mts",
+    "capture": "tsx --env-file-if-exists=.env.local scripts/capture.mts"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",
